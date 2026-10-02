@@ -1,0 +1,14 @@
+.git
+.venv
+__pycache__
+*.pyc
+*.csv
+!examples/demo.csv
+*.zip
+.env
+TASK.md
+PLAN.md
+README.md
+tests
+data
+logs

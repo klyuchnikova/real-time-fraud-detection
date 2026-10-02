@@ -1,0 +1,4 @@
+transaction_time,merch,cat_id,amount,name_1,name_2,gender,street,one_city,us_state,post_code,lat,lon,population_city,jobs,merchant_lat,merchant_lon
+2019-09-14 02:46,fraud_Demo Store,grocery_net,25.79,Alex,Example,M,1 Example Street,Exampletown,TX,76443,32.1482,-99.1872,1897,Office worker,31.772057,-99.103183
+2019-07-25 20:30,fraud_Demo Market,health_fitness,87.80,Taylor,Example,F,2 Example Street,Exampletown,NY,14733,42.1239,-79.1895,3833,Office worker,42.635312,-78.334559
+2019-11-03 11:15,fraud_Demo Shop,gas_transport,49.90,Jordan,Example,M,3 Example Street,Exampletown,CA,90001,34.0522,-118.2437,10000,Office worker,34.1022,-118.2137
