@@ -1,0 +1,5 @@
+# Dataset identity and export metadata use hashes of the actual CSV bytes.
+*.csv -text
+*.sql text eol=lf
+*.py text eol=lf
+*.yml text eol=lf

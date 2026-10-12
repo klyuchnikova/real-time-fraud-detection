@@ -1,6 +1,5 @@
 """Send test transactions and inspect saved scores."""
 
-import csv
 import io
 import json
 import os

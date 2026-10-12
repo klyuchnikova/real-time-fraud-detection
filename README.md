@@ -142,6 +142,8 @@ docker compose down
 
 down сохраняет тома. docker compose down -v удаляет **данные именно этого Compose-проекта**, после чего CSV надо загрузить заново. При проблеме проверьте Engine, память/порты, пароль и логи init. Ошибочные сообщения не пропускаются молча: kafka_skip_broken_messages=0; ожидание загрузки ограничено timeout и выводит диагностику consumer.
 
+Проверен запуск из чистой локальной копии коммита a2f344c с новыми томами: сборка, environment check, demo producer/export и интеграционные тесты прошли. Датасет и .env из рабочего проекта не копировались. Отчёт — [reports/validation.json](reports/validation.json). CSV сохраняются в Git без преобразования переводов строк, чтобы не менять хеши и ID.
+
 ## Прошлое задание
 
 Код скоринга, PostgreSQL и Streamlit сохранён. [README.hw1.md](README.hw1.md), [TASK.hw1.md](TASK.hw1.md). Запуск: docker compose -p real-time-fraud-detection-hw1 -f docker-compose.hw1.yml up -d --build. Hw1 и hw2 используют Kafka-порт 9094: сначала остановите hw2, если нужен hw1.

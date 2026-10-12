@@ -7,6 +7,11 @@
   "restart_verified": true,
   "restart_csv_sha256": "876bd1d4c743606687199f33100d9a2c10cf4fd94646299ba0f99c9997a29dfc",
   "original_csv_sha256": "876bd1d4c743606687199f33100d9a2c10cf4fd94646299ba0f99c9997a29dfc",
-  "clean_checkout_verified": false,
-  "branch_published": false
+  "clean_checkout_verified": true,
+  "acceptance_source_commit": "a2f344c",
+  "acceptance_project": "hw2-acceptance",
+  "acceptance_environment_check_passed": true,
+  "acceptance_demo_records": 9,
+  "acceptance_integration_tests": 4,
+  "csv_bytes_preserved_by_git_attributes": true
 }

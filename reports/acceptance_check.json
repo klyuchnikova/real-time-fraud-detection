@@ -1,0 +1,17 @@
+{
+  "dataset_id": "ac2e62cf542f9bf7d24648541ce2f26ab9b7f407747f202ea1a3a52222fff650",
+  "source_file": "examples/analytics_demo.csv",
+  "source_sha256": "3c1b2d0dd8a5a36a07de7ce77c94469c9635e48310c14ec2fcc4cb5d6b975d7e",
+  "selected_rows": 9,
+  "verified_unique_records": 9,
+  "regions": 5,
+  "raw_rows": 9,
+  "unique_transactions": 9,
+  "unique_row_indices": 9,
+  "sql_sha256": "aeb3e762ede7af8056c9dfcfe0e1ff1a2d38da96ce74b658038f979ade48e09a",
+  "csv_sha256": "c0f0b6d21ea409f4e625277d1a695597727c27d54815e6b162e285611420ec6d",
+  "clickhouse_version": "26.8.20.9",
+  "exported_at": "2026-10-12T19:58:02.891673+00:00",
+  "tie_rule": "maximum (amount, transaction_id)",
+  "independent_reference_matches": true
+}
