@@ -1,0 +1,44 @@
+{
+  "dataset_id": "e916bc5c08fcd81b7a4e8ed4972f33c191fff03d9b1205304cbc862780811eae",
+  "source_sha256": "4129db5d9079f907d9a38aefc170f5e105a650a8273457aaae02a1f735516eac",
+  "unique_records": 262144,
+  "raw_rows": 262144,
+  "clickhouse_version": "26.8.20.9",
+  "runs": 7,
+  "warmups_per_variant": 1,
+  "settings": {
+    "use_query_cache": 0,
+    "max_threads": 2,
+    "max_memory_usage": 536870912,
+    "log_queries": 1,
+    "log_queries_probability": 1
+  },
+  "final_merge_before_measurement": true,
+  "cache": "warm OS/server caches; query result cache disabled; rotating order",
+  "storage_scope": "baseline contains selected dataset; optimized tables include all loaded datasets",
+  "created_at": "2026-10-12T19:48:49.157028+00:00",
+  "median": {
+    "baseline": {
+      "client_ms": 166.505,
+      "server_ms": 164,
+      "read_rows": 262144,
+      "read_bytes": 42080652,
+      "memory_bytes": 9497064
+    },
+    "optimized_raw": {
+      "client_ms": 166.258,
+      "server_ms": 164,
+      "read_rows": 262144,
+      "read_bytes": 37748736,
+      "memory_bytes": 7538579
+    },
+    "aggregate": {
+      "client_ms": 8.303,
+      "server_ms": 6,
+      "read_rows": 56,
+      "read_bytes": 11886,
+      "memory_bytes": 4509707
+    }
+  },
+  "all_query_results_match": true
+}

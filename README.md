@@ -1,113 +1,149 @@
-# Потоковый скоринг транзакций
+# ДЗ №2: CSV → Kafka → ClickHouse
 
-Учебный сервис читает транзакции из Kafka, считает вероятность фрода готовой моделью CatBoost и сохраняет результат в Kafka и PostgreSQL. В Streamlit можно отправить CSV и посмотреть последние результаты.
+Ветка [ht-2](https://github.com/klyuchnikova/real-time-fraud-detection/tree/ht-2). Отдельный Python-скрипт отправляет CSV в Kafka, ClickHouse Kafka Engine и materialized views сохраняют транзакции и рассчитывают максимум по каждому штату. Подготовлены итоговый SQL, результат для полного test.csv, тесты реального DDL и измерения оптимизации.
 
-```text
-CSV → Streamlit → Kafka: transactions → scoring-service → Kafka: scores
-                                                          ↓
-                                                    scores-sink
-                                                          ↓
-                                                  PostgreSQL → Streamlit
-```
+[План](PLAN.md) · [Условие](TASK.md) · [Результат CSV](results/max_transaction_by_state.csv) · [Проверка результата](results/max_transaction_by_state.metadata.json)
 
-Модель работает на CPU. Обучения внутри сервиса нет. Код подготовки признаков основан на [проекте семинара](https://github.com/NikitaMalykhin/mts25_mlops_hw2_real_time_fraud_detection), коммит `41540d91f0cbde0106671d3eb8270403508fade4`; из него также взята модель `my_catboost.cbm`. Статистики из обучающего набора заранее сохранены в `artifacts/preprocessor.json`, поэтому для обычного запуска `train.csv` не нужен.
+## Первый запуск
 
-## Быстрый запуск
+Нужны Git, Docker Engine с Linux-контейнерами и Compose v2. На Windows используйте запущенный Docker Desktop/WSL 2. Проверено с Docker 27.5.1, Compose 2.32.4, 4 CPU и 6 ГБ памяти Docker. Kafka ограничена 1.5 ГБ, ClickHouse — 2 ГБ. Python и ClickHouse отдельно устанавливать не нужно.
 
-Нужен Docker Desktop с Docker Compose. Для Mac с Apple Silicon используйте [официальную установку Docker Desktop](https://docs.docker.com/desktop/setup/install/mac-install/). После первого запуска приложения проверьте в терминале:
-
-```bash
+~~~bash
+git clone --branch ht-2 https://github.com/klyuchnikova/real-time-fraud-detection.git
+cd real-time-fraud-detection
 docker version
 docker compose version
-docker info
-```
+~~~
 
-Из корня этого репозитория выполните:
+Создайте конфигурацию. PowerShell:
 
-```bash
+~~~powershell
+Copy-Item .env.example .env
+~~~
+
+Bash:
+
+~~~bash
 cp .env.example .env
-docker compose up --build -d
+~~~
+
+Если .env уже существует, используйте его. Пример содержит пароль локального учебного окружения. После первого старта пароль должен соответствовать пользователю в сохранённом томе ClickHouse.
+
+~~~bash
+docker compose up -d
+docker compose build tools
 docker compose ps -a
-```
+docker compose run --rm tools python -m scripts.check_environment
+~~~
 
-При первом запуске загрузка образов и сборка могут занять несколько минут. Дождитесь, пока `kafka` и `postgres` станут `healthy`, одноразовые `kafka-volume-init` и `kafka-init` завершатся с кодом 0, а остальные сервисы будут `running`. Откройте [интерфейс](http://localhost:8501).
+Kafka и ClickHouse должны быть healthy; kafka-volume-init, kafka-init и clickhouse-init — Exited (0). Compose ожидает готовность сервисов и применение DDL перед tools. В проверенной версии Compose up --wait считает завершившийся init ошибкой даже при коде 0, поэтому используем up -d и проверку через tools.
 
-Во вкладке **«Отправить транзакции»** загрузите [examples/demo.csv](examples/demo.csv) и нажмите **«Отправить в Kafka»**. Затем во вкладке **«Результаты»** нажмите **«Посмотреть результаты»**. Демо содержит три вымышленные транзакции. Список фродовых транзакций может быть пустым: он показывает только результаты, которые модель пометила флагом 1. Гистограмма покажет полученные скоры.
+Compose-проект real-time-fraud-detection-ht2 имеет собственные тома и локальные порты 9094/8123. Для других портов добавьте KAFKA_HOST_PORT и CLICKHOUSE_HTTP_PORT в .env. Закреплены apache/kafka:4.3.1, clickhouse/clickhouse-server:26.8.20.9, Python 3.12.12 и [requirements.txt](requirements.txt).
 
-Автоматическая проверка всей цепочки также доступна одной командой:
+## Демонстрация без скачивания данных
 
-```bash
-docker compose exec -T interface python -m scripts.smoke_stack
-```
+[examples/analytics_demo.csv](examples/analytics_demo.csv) содержит 9 транзакций и 5 регионов, равные и отрицательные суммы, CSV-кавычки/запятые.
 
-Она отправляет одну вымышленную транзакцию и ждёт запись в PostgreSQL. После перезапуска потребителей присоединение к Kafka может занять около минуты; проверка ждёт до 120 секунд.
+~~~bash
+docker compose run --rm tools python -m scripts.load_csv_to_kafka examples/analytics_demo.csv --manifest reports/demo_manifest.json
+docker compose run --rm tools python -m scripts.export_results --manifest reports/demo_manifest.json --output results/demo_max_transaction_by_state.csv
+~~~
 
-Для проверки на данных соревнования распакуйте локальный архив и загрузите `test.csv` в интерфейсе:
+Ожидается status=success, selected_rows=confirmed_messages=9, verified_unique_records=9, regions=5. Итог показан в экспортированном CSV. Для NY две операции имеют сумму 87.80; победитель определяется ID.
 
-```bash
-unzip -p teta-ml-1-2025.zip test.csv > test.csv
-```
+Чтение CSV вынесено из прежнего Streamlit-загрузчика в [common/schema.py](common/schema.py). CLI использует общий контракт и добавляет проверку типов, идентификаторы и подтверждение доставки. Прежний интерфейс также использует этот reader.
 
-Если архива нет, получите его на [странице соревнования](https://www.kaggle.com/competitions/teta-ml-1-2025). Файл содержит 262 144 строки; для быстрой проверки начните со 100 строк. Для проверки непустого списка фрода можно отправить 1000 строк: на первых 1000 строках данного архива модель поставила 5 флагов. Это проверка работы сервиса, а не оценка качества модели. Исходные CSV и ZIP исключены из Git.
+## Полный датасет
 
-## Как проверить результат
+Скачайте данные по [ссылке задания](https://www.kaggle.com/t/1918f3f6435300327d38d6c596f97394) соревнования teta-ml-1-2025. Положите test.csv в teta-ml-1-2025/test.csv. Каталог подключён к tools только для чтения: уже распакованные файлы перекладывать не требуется. Источники исключены из Git и Docker build context.
 
-Сообщения в топике `scores` содержат по одному JSON-объекту с полями `transaction_id`, `score`, `fraud_flag`:
+~~~bash
+docker compose run --rm tools python -m scripts.load_csv_to_kafka teta-ml-1-2025/test.csv
+docker compose run --rm tools python -m scripts.export_results
+~~~
 
-```bash
-docker compose exec kafka /opt/kafka/bin/kafka-console-consumer.sh --bootstrap-server kafka:19092 --topic scores --from-beginning --max-messages 1 --timeout-ms 10000
-```
+Producer проверяет CSV, отправляет записи и сохраняет reports/load_manifest.json. Экспорт ожидает загрузку, сравнивает **все поля каждой уникальной записи** с независимым CSV-эталоном, сравнивает оба SQL и пишет results/max_transaction_by_state.csv через CSVWithNames. CSV создаётся Python, без зависимости от кодировки shell-redirection.
 
-Проверьте витрину в PostgreSQL:
+Приложенный результат: 262 144 записи, 51 регион (50 штатов и DC). SHA-256 test.csv: 4129db5d9079f907d9a38aefc170f5e105a650a8273457aaae02a1f735516eac. [Профиль данных](reports/dataset_profile.json) также содержит сведения о train: 786 431 строка и target. Train поддерживается отдельной загрузкой; sample_submition.csv — шаблон соревнования и не принимается загрузчиком транзакций.
 
-```bash
-docker compose exec postgres psql -U fraud -d fraud -c 'SELECT transaction_id, score, fraud_flag FROM transaction_scores ORDER BY received_order DESC LIMIT 10;'
-```
+Для небольшой части test.csv:
 
-Если результаты не появились сразу, подождите несколько секунд и обновите их кнопкой в интерфейсе. Для диагностики:
+~~~bash
+docker compose run --rm tools python -m scripts.load_csv_to_kafka teta-ml-1-2025/test.csv --limit 1000 --manifest reports/prefix_manifest.json
+docker compose run --rm tools python -m scripts.export_results --manifest reports/prefix_manifest.json --output results/prefix_max.csv
+~~~
 
-```bash
-docker compose logs --tail=100 scoring-service scores-sink
-docker compose ps
-```
+dataset_id учитывает SHA-256 файла и число выбранных строк. Demo, prefix, train и полный test изолированы. Повтор той же выборки получает прежние ID. Загрузчик делает проход проверки, проход отправки и дополнительную проверку хеша файла; память не растёт с размером CSV. При ошибке доставки manifest получает failed и экспорт запрещён.
 
-Остановка без удаления данных:
+## DDL и запрос
 
-```bash
+Файлы [sql/clickhouse](sql/clickhouse):
+
+- 001_baseline.sql — контрольная MergeTree для benchmark.
+- 002_optimized.sql — самостоятельный итоговый DDL базы, Kafka Engine, MergeTree, AggregatingMergeTree и двух MV. Применяется автоматически clickhouse-init.
+- 003_max_transaction_by_state_raw.sql — максимум непосредственно по транзакциям.
+- 004_max_transaction_by_state.sql — итоговый запрос через argMaxMerge.
+
+Ищется категория **отдельной самой крупной транзакции**, а не категория с наибольшей суммой всех операций. Сравнение по (amount, transaction_id): при равной сумме выбираем лексикографически больший ID. ID — SHA-256 строки dataset_id:row_index. Оба SQL используют одинаковый порядок и возвращают us_state, cat_id, max_amount, transaction_id, сортируя по штату.
+
+SQL принимает database:Identifier и dataset_id:String; CLI подставляет их из manifest. Для запуска в clickhouse-client передайте --param_database=fraud_analytics и --param_dataset_id=<dataset_id> вместе с содержимым SQL. Воспроизводимый экспорт выполняется командой выше.
+
+amount хранится как Decimal64(2), post_code — String с ведущими нулями. Время источника не имеет timezone: сохраняется исходное время с технической интерпретацией UTC, без пересчёта по штату. Сохранены все 17 исходных полей, target — Nullable(UInt8), для test это NULL. Дополнительно: row_index, ID набора/транзакции и Kafka topic/partition/offset.
+
+Kafka Engine имеет семантику at least once: сырые записи могут дублироваться. Повторы одной операции не меняют max; argMaxMerge объединяет состояния при чтении до фоновых слияний. Это не exactly once и не решение для сумм/счётчиков. IF NOT EXISTS не мигрирует существующую схему: при изменении DDL потребуется migration или пересоздание учебного окружения с replay. MV получает новые вставки; для уже существующих данных нужен backfill.
+
+## Оптимизация
+
+MergeTree сортируется по (dataset_id, us_state, transaction_time, transaction_id). LowCardinality используется для штатов, категорий, пола и Kafka topic; ZSTD — для сжатия, Delta — для времени, индекса и offset. Партиции, TTL и skipping indexes не добавлены: запрос ищет максимум по всем данным выбранного набора.
+
+Главное ускорение даёт state_max: MV поддерживает argMaxState по (dataset_id, us_state), SQL объединяет его через argMaxMerge. Цена — дополнительная работа при вставке и отдельная таблица. Витрина предназначена для целевого запроса; другая аналитика использует сырые данные.
+
+~~~bash
+docker compose run --rm tools python -m scripts.benchmark_clickhouse --merge
+~~~
+
+Benchmark очищает только контрольную transactions_baseline и копирует выбранный dataset. --merge явно выполняет OPTIMIZE FINAL для трёх таблиц перед измерением; корректность без слияний проверяется отдельным тестом. После одного прогрева выполняются 7 запусков каждого варианта в меняющемся порядке, use_query_cache=0, max_threads=2; кеш файлов остаётся прогретым. Метрики читаются из system.query_log, размеры — из system.parts. Отчёты перезаписываются.
+
+Измерение на полном test.csv:
+
+| Вариант | Медиана, сервер | Строк прочитано | Байтов прочитано | Память запроса |
+| --- | ---: | ---: | ---: | ---: |
+| baseline | 164 мс | 262 144 | 42 080 652 | 9 497 064 |
+| optimized raw | 164 мс | 262 144 | 37 748 736 | 7 538 579 |
+| aggregate | 6 мс | 56 | 11 886 | 4 509 707 |
+
+Размер bytes_on_disk: baseline — 42 761 506 байт, optimized raw — 20 799 695, агрегаты — 6 260. Суммарное оптимизированное хранение — примерно 49% контрольного. Raw/aggregate дополнительно содержали 9 demo-строк и 5 demo-регионов; baseline — только test. Поэтому агрегат прочитал 56 состояний, а вернул 51. Кодеки уменьшили размер и чтение, но не изменили медиану времени этого запроса. Время зависит от машины и нагрузки.
+
+Подробности: [benchmark.csv](reports/benchmark.csv), [benchmark_summary.json](reports/benchmark_summary.json), [storage.csv](reports/storage.csv). Benchmark временно хранит дополнительную копию исходных записей.
+
+## Тесты и рестарт
+
+~~~bash
+docker compose run --rm tools python -m unittest discover -s tests -p test_csv_loader.py -v
+docker compose run --rm tools python -m unittest discover -s tests/integration -v
+~~~
+
+9 тестов проверяют CSV/BOM/кавычки, target, Decimal, типы, ID, acknowledgements и timeout очереди. 4 интеграционных теста выполняют настоящий DDL, проверяют кодеки/движки, повторное применение без потери данных, ошибочный DDL, блоки до слияний, равные суммы, новый максимум, изоляцию, Kafka replay, все поля и экспорт. Ошибочный JSON проверяется через system.kafka_consumers. Каждый тест использует случайную базу/топик/group и удаляет только их. Старые ML-тесты относятся к hw1 и требуют его dependencies.
+
+~~~bash
+docker compose restart kafka clickhouse
+docker compose run --rm tools python -m scripts.export_results --output results/restart_check.csv
+~~~
+
+После рестарта проверены все 262 144 записи и 51 регион; SHA-256 результата совпал с первоначальным. При replay raw_rows может вырасти, а число уникальных транзакций и максимум остаются прежними.
+
+## Диагностика и остановка
+
+~~~bash
+docker compose ps -a
+docker compose logs --tail=100 kafka clickhouse kafka-init clickhouse-init
 docker compose down
-```
+~~~
 
-## Формат и обработка
+down сохраняет тома. docker compose down -v удаляет **данные именно этого Compose-проекта**, после чего CSV надо загрузить заново. При проблеме проверьте Engine, память/порты, пароль и логи init. Ошибочные сообщения не пропускаются молча: kafka_skip_broken_messages=0; ожидание загрузки ограничено timeout и выводит диагностику consumer.
 
-`transactions` принимает один JSON-объект на транзакцию: `{"transaction_id":"<id>","data":{...}}`. Поле `data` содержит 17 колонок из `test.csv`. Интерфейс сам создаёт ID. Скоринг использует подготовку времени, категорий, географического расстояния и числовых значений из семинара. Порог для `fraud_flag` — `0.98`; его можно изменить через `FRAUD_THRESHOLD` в `docker-compose.yml`.
+## Прошлое задание
 
-`scores` содержит ровно три поля: `transaction_id`, `score` от 0 до 1 и `fraud_flag` со значением 0 или 1. Отдельный `scores-sink` записывает их в PostgreSQL. При повторе сообщения строка с тем же `transaction_id` не дублируется. Витрина хранит время и порядок получения; интерфейс читает из неё 10 последних записей с флагом 1 и скоры последних 100 записей. Некорректное сообщение пропускается с предупреждением в логах и подтверждением offset; сервисы не пытаются обучать модель на потоке.
+Код скоринга, PostgreSQL и Streamlit сохранён. [README.hw1.md](README.hw1.md), [TASK.hw1.md](TASK.hw1.md). Запуск: docker compose -p real-time-fraud-detection-hw1 -f docker-compose.hw1.yml up -d --build. Hw1 и hw2 используют Kafka-порт 9094: сначала остановите hw2, если нужен hw1.
 
-Kafka доступна с компьютера на `localhost:9094`, Streamlit — на `localhost:8501`. PostgreSQL доступна только контейнерам сети Compose. `.env` содержит локальный пароль БД и не отслеживается Git.
-
-## Структура проекта
-
-- `scoring_service/`: чтение Kafka, подготовка признаков, модель и публикация скора.
-- `scores_sink/`: чтение `scores` и запись в PostgreSQL.
-- `interface/`: отправка CSV и просмотр результатов.
-- `artifacts/`: готовая модель и сохранённые статистики предобработки.
-- `sql/`: создание витрины.
-- `scripts/export_preprocessor.py`: одноразовое обновление статистик из `train.csv`.
-- `examples/demo.csv`: небольшой вымышленный пример для проверки запуска.
-
-Для повторного создания `artifacts/preprocessor.json` нужен архив в корне проекта и Python 3.12. Это действие выполняется отдельно от работы сервиса:
-
-```bash
-python3 -m venv .venv
-.venv/bin/python -m pip install -r scoring_service/requirements.txt
-.venv/bin/python -m scripts.export_preprocessor
-```
-
-После создания артефакта можно запустить локальные проверки:
-
-```bash
-.venv/bin/python -m pip install -r scores_sink/requirements.txt
-.venv/bin/python -m unittest discover -s tests -v
-```
-
-Подробные шаги разработки и критерии приёмки находятся в [PLAN.md](PLAN.md).
+Документация: [Kafka Engine](https://clickhouse.com/docs/engines/table-engines/integrations/kafka), [AggregatingMergeTree](https://clickhouse.com/docs/engines/table-engines/mergetree-family/aggregatingmergetree), [argMax](https://clickhouse.com/docs/sql-reference/aggregate-functions/reference/argmax), [кодеки](https://clickhouse.com/docs/sql-reference/statements/create/table#column-compression-codecs).

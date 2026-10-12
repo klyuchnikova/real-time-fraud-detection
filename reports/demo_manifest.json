@@ -1,0 +1,14 @@
+{
+  "status": "success",
+  "source_file": "examples/analytics_demo.csv",
+  "confirmed_messages": 9,
+  "schema_version": 1,
+  "source_sha256": "3c1b2d0dd8a5a36a07de7ce77c94469c9635e48310c14ec2fcc4cb5d6b975d7e",
+  "source_total_rows": 9,
+  "selected_rows": 9,
+  "dataset_id": "ac2e62cf542f9bf7d24648541ce2f26ab9b7f407747f202ea1a3a52222fff650",
+  "broker": "kafka:19092",
+  "topic": "transactions_analytics",
+  "started_at": "2026-10-12T19:37:21.734705+00:00",
+  "completed_at": "2026-10-12T19:37:22.800566+00:00"
+}

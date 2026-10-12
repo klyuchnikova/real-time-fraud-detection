@@ -1,0 +1,17 @@
+{
+  "status": "ok",
+  "clickhouse_version": "26.8.20.9",
+  "clickhouse_engines": [
+    "AggregatingMergeTree",
+    "Kafka",
+    "MergeTree"
+  ],
+  "decimal_round_trip": true,
+  "kafka_round_trip": true,
+  "kafka_engine_ingestion": true,
+  "packages": {
+    "clickhouse-connect": "1.10.0",
+    "confluent-kafka": "2.10.0"
+  },
+  "temporary_resources_cleaned_on_exit": true
+}

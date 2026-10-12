@@ -1,3 +1,5 @@
+name: real-time-fraud-detection-ht2
+
 services:
   kafka-volume-init:
     image: apache/kafka:4.3.1
@@ -11,8 +13,9 @@ services:
     image: apache/kafka:4.3.1
     hostname: kafka
     restart: unless-stopped
+    mem_limit: 1536m
     ports:
-      - "127.0.0.1:9094:9094"
+      - "127.0.0.1:${KAFKA_HOST_PORT:-9094}:9094"
     environment:
       KAFKA_NODE_ID: 1
       KAFKA_PROCESS_ROLES: broker,controller
@@ -20,7 +23,7 @@ services:
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_LISTENERS: CONTROLLER://:29093,PLAINTEXT://:19092,PLAINTEXT_HOST://:9094
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:19092,PLAINTEXT_HOST://localhost:9094
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:19092,PLAINTEXT_HOST://localhost:${KAFKA_HOST_PORT:-9094}
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
@@ -28,6 +31,7 @@ services:
       KAFKA_SHARE_COORDINATOR_STATE_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_SHARE_COORDINATOR_STATE_TOPIC_MIN_ISR: 1
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_HEAP_OPTS: "-Xms256m -Xmx512m"
       KAFKA_LOG_DIRS: /tmp/kraft-combined-logs
       CLUSTER_ID: 4L6g3nShT-eMCtK--X86sw
     volumes:
@@ -50,71 +54,75 @@ services:
     entrypoint: ["/bin/bash", "-ec"]
     command:
       - |
-        /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:19092 --create --if-not-exists --topic transactions --partitions 1 --replication-factor 1
-        /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:19092 --create --if-not-exists --topic scores --partitions 1 --replication-factor 1
+        /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:19092 --create --if-not-exists --topic transactions_analytics --partitions 1 --replication-factor 1
 
-  postgres:
-    image: postgres:16.4-alpine
+  clickhouse:
+    image: clickhouse/clickhouse-server:26.8.20.9
     restart: unless-stopped
+    mem_limit: 2g
+    ports:
+      - "127.0.0.1:${CLICKHOUSE_HTTP_PORT:-8123}:8123"
     environment:
-      POSTGRES_DB: fraud
-      POSTGRES_USER: fraud
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Copy .env.example to .env}
+      CLICKHOUSE_DB: fraud_analytics
+      CLICKHOUSE_USER: analytics
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:?Copy .env.example to .env}
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: "1"
+    ulimits:
+      nofile:
+        soft: 262144
+        hard: 262144
     volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./sql/001_transaction_scores.sql:/docker-entrypoint-initdb.d/001_transaction_scores.sql:ro
+      - clickhouse_data:/var/lib/clickhouse
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U fraud -d fraud"]
+      test: ["CMD-SHELL", "clickhouse-client --user \"$$CLICKHOUSE_USER\" --password \"$$CLICKHOUSE_PASSWORD\" --query 'SELECT 1'"]
       interval: 5s
       timeout: 5s
-      retries: 10
+      retries: 24
+      start_period: 20s
 
-  scoring-service:
-    build:
-      context: .
-      dockerfile: scoring_service/Dockerfile
-    restart: unless-stopped
+  clickhouse-init:
+    image: clickhouse/clickhouse-server:26.8.20.9
     environment:
-      KAFKA_BOOTSTRAP_SERVERS: kafka:19092
-      KAFKA_TRANSACTIONS_TOPIC: transactions
-      KAFKA_SCORES_TOPIC: scores
-      FRAUD_THRESHOLD: "0.98"
+      CLICKHOUSE_USER: analytics
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:?Copy .env.example to .env}
+    entrypoint: ["/bin/sh", "-ec"]
+    command:
+      - |
+        exec clickhouse-client --host clickhouse --user "$$CLICKHOUSE_USER" --password "$$CLICKHOUSE_PASSWORD" --multiquery < /ddl/002_optimized.sql
+    volumes:
+      - ./sql/clickhouse:/ddl:ro
     depends_on:
-      kafka-init:
-        condition: service_completed_successfully
-
-  scores-sink:
-    build:
-      context: .
-      dockerfile: scores_sink/Dockerfile
-    restart: unless-stopped
-    environment:
-      KAFKA_BOOTSTRAP_SERVERS: kafka:19092
-      KAFKA_SCORES_TOPIC: scores
-      DATABASE_URL: postgresql://fraud:${POSTGRES_PASSWORD}@postgres:5432/fraud
-    depends_on:
-      kafka-init:
-        condition: service_completed_successfully
-      postgres:
+      clickhouse:
         condition: service_healthy
+      kafka-init:
+        condition: service_completed_successfully
 
-  interface:
+  tools:
     build:
       context: .
-      dockerfile: interface/Dockerfile
-    restart: unless-stopped
-    ports:
-      - "127.0.0.1:8501:8501"
+      dockerfile: Dockerfile
+    profiles: ["tools"]
+    working_dir: /app
     environment:
       KAFKA_BOOTSTRAP_SERVERS: kafka:19092
-      KAFKA_TRANSACTIONS_TOPIC: transactions
-      DATABASE_URL: postgresql://fraud:${POSTGRES_PASSWORD}@postgres:5432/fraud
+      KAFKA_ANALYTICS_TOPIC: transactions_analytics
+      CLICKHOUSE_HOST: clickhouse
+      CLICKHOUSE_PORT: "8123"
+      CLICKHOUSE_USER: analytics
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:?Copy .env.example to .env}
+    volumes:
+      - ./teta-ml-1-2025:/app/teta-ml-1-2025:ro
+      - ./reports:/app/reports
+      - ./results:/app/results
     depends_on:
       kafka-init:
         condition: service_completed_successfully
-      postgres:
+      clickhouse:
         condition: service_healthy
+      clickhouse-init:
+        condition: service_completed_successfully
+    command: ["python", "-m", "scripts.check_environment"]
 
 volumes:
   kafka_data:
-  postgres_data:
+  clickhouse_data:

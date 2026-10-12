@@ -1,0 +1,12 @@
+{
+  "unit_tests": 9,
+  "integration_tests": 4,
+  "tests_passed": true,
+  "full_unique_records_verified": 262144,
+  "regions": 51,
+  "restart_verified": true,
+  "restart_csv_sha256": "876bd1d4c743606687199f33100d9a2c10cf4fd94646299ba0f99c9997a29dfc",
+  "original_csv_sha256": "876bd1d4c743606687199f33100d9a2c10cf4fd94646299ba0f99c9997a29dfc",
+  "clean_checkout_verified": false,
+  "branch_published": false
+}

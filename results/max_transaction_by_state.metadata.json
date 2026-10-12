@@ -1,0 +1,17 @@
+{
+  "dataset_id": "e916bc5c08fcd81b7a4e8ed4972f33c191fff03d9b1205304cbc862780811eae",
+  "source_file": "teta-ml-1-2025/test.csv",
+  "source_sha256": "4129db5d9079f907d9a38aefc170f5e105a650a8273457aaae02a1f735516eac",
+  "selected_rows": 262144,
+  "verified_unique_records": 262144,
+  "regions": 51,
+  "raw_rows": 262144,
+  "unique_transactions": 262144,
+  "unique_row_indices": 262144,
+  "sql_sha256": "aeb3e762ede7af8056c9dfcfe0e1ff1a2d38da96ce74b658038f979ade48e09a",
+  "csv_sha256": "876bd1d4c743606687199f33100d9a2c10cf4fd94646299ba0f99c9997a29dfc",
+  "clickhouse_version": "26.8.20.9",
+  "exported_at": "2026-10-12T19:48:04.496645+00:00",
+  "tie_rule": "maximum (amount, transaction_id)",
+  "independent_reference_matches": true
+}

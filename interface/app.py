@@ -12,7 +12,7 @@ import pandas as pd
 import psycopg
 import streamlit as st
 
-from common.schema import INPUT_COLUMNS
+from common.schema import read_transactions_csv
 
 
 BROKER = os.getenv("KAFKA_BOOTSTRAP_SERVERS", "kafka:19092")
@@ -26,11 +26,7 @@ send_tab, results_tab = st.tabs(["Отправить транзакции", "Р�
 
 def read_csv(uploaded_file):
     text = io.StringIO(uploaded_file.getvalue().decode("utf-8-sig"), newline="")
-    reader = csv.DictReader(text)
-    if (reader.fieldnames is None or len(reader.fieldnames) != len(INPUT_COLUMNS)
-            or set(reader.fieldnames) != set(INPUT_COLUMNS)):
-        raise ValueError("CSV должен содержать ровно те же 17 колонок, что и test.csv")
-    return reader
+    return read_transactions_csv(text)
 
 
 def send_rows(uploaded_file, limit: int) -> int:

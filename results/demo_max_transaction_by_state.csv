@@ -1,0 +1,6 @@
+"us_state","cat_id","max_amount","transaction_id"
+"CA","gas_transport",49.9,"bbe8181823e14fd2a5cbdc2bf6b6998eefb0a45da6663728e38e843164ba1e4e"
+"DC","travel",-1,"6dceccb19ce6d54ddd2572ac6792b27f97417155cc4434c1bf517fed092eb4b4"
+"NY","misc_net",87.8,"8f2be9148fd0395534928e386292ab0fc9f84af8656749265c5a3ebd7b87dd3b"
+"TX","shopping_pos",250.5,"ca8369144274ef08b88033587f64a0b55a68cf3ceee132234d5e214bf760249a"
+"WA","travel",0.2,"ab70a49f5c6a0fd509e05821c23f46c6a84f9d69433f95362471a868b8302a0d"

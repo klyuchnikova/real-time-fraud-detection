@@ -1,0 +1,14 @@
+{
+  "status": "success",
+  "source_file": "teta-ml-1-2025/test.csv",
+  "confirmed_messages": 262144,
+  "schema_version": 1,
+  "source_sha256": "4129db5d9079f907d9a38aefc170f5e105a650a8273457aaae02a1f735516eac",
+  "source_total_rows": 262144,
+  "selected_rows": 262144,
+  "dataset_id": "e916bc5c08fcd81b7a4e8ed4972f33c191fff03d9b1205304cbc862780811eae",
+  "broker": "kafka:19092",
+  "topic": "transactions_analytics",
+  "started_at": "2026-10-12T19:46:07.414586+00:00",
+  "completed_at": "2026-10-12T19:46:34.821022+00:00"
+}
