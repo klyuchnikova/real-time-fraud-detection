@@ -13,5 +13,10 @@
   "acceptance_environment_check_passed": true,
   "acceptance_demo_records": 9,
   "acceptance_integration_tests": 4,
-  "csv_bytes_preserved_by_git_attributes": true
+  "csv_bytes_preserved_by_git_attributes": true,
+  "restart_new_messages_confirmed": 9,
+  "restart_demo_raw_rows_after_replay": 18,
+  "restart_demo_unique_transactions": 9,
+  "restart_demo_maximum_kafka_offset": 262161,
+  "restart_demo_result_unchanged": true
 }
