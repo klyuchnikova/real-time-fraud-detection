@@ -2,6 +2,9 @@
 
 Ветка [ht-2](https://github.com/klyuchnikova/real-time-fraud-detection/tree/ht-2). Отдельный Python-скрипт отправляет CSV в Kafka, ClickHouse Kafka Engine и materialized views сохраняют транзакции и рассчитывают максимум по каждому штату. Подготовлены итоговый SQL, результат для полного test.csv, тесты реального DDL и измерения оптимизации.
 
+<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/0a14f3a3-49fb-4f7e-86e0-ae6b861f50a6" />
+
+
 [План](PLAN.md) · [Условие](TASK.md) · [Результат CSV](results/max_transaction_by_state.csv) · [Проверка результата](results/max_transaction_by_state.metadata.json)
 
 ## Первый запуск
