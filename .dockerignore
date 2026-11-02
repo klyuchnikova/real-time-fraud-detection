@@ -16,4 +16,4 @@ reports
 results
 logs
 .acceptance
-artifacts/*.cbm
+artifacts
