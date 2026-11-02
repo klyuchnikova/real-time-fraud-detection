@@ -20,5 +20,5 @@ reports/*
 !reports/hw3_validation.json
 postgres_data/
 kafka_data/
-/PLAN.md
-/TASK.md
+*/PLAN.md
+*/TASK.md
