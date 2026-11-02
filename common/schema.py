@@ -1,4 +1,4 @@
-"""CSV column contract shared by the hw1 interface and hw2 CLI."""
+"""CSV contract shared by the training loader and transaction interface."""
 import csv
 
 INPUT_COLUMNS = (
@@ -9,7 +9,7 @@ INPUT_COLUMNS = (
 
 
 def read_transactions_csv(source, *, allow_target=False):
-    """Extracted from the original Streamlit uploader; works with any text stream."""
+    """Validate the CSV schema without loading all rows into memory."""
     reader = csv.DictReader(source, strict=True)
     columns = reader.fieldnames
     expected = set(INPUT_COLUMNS)

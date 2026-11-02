@@ -1,151 +1,191 @@
-# ДЗ №2: CSV → Kafka → ClickHouse
+# ДЗ №3 — переобучение и потоковый скоринг
 
-Ветка [ht-2](https://github.com/klyuchnikova/real-time-fraud-detection/tree/ht-2). Отдельный Python-скрипт отправляет CSV в Kafka, ClickHouse Kafka Engine и materialized views сохраняют транзакции и рассчитывают максимум по каждому штату. Подготовлены итоговый SQL, результат для полного test.csv, тесты реального DDL и измерения оптимизации.
-
-[План](PLAN.md) · [Условие](TASK.md) · [Результат CSV](results/max_transaction_by_state.csv) · [Проверка результата](results/max_transaction_by_state.metadata.json)
+Ветка очередная. Kafka передаёт транзакции в скоринг; результаты с `score`, `fraud_flag` и `model_version` сохраняются в PostgreSQL. Airflow поставляет размеченные месяцы, переобучает модель и проверяет данные.
 
 ## Первый запуск
 
-Нужны Git, Docker Engine с Linux-контейнерами и Compose v2. На Windows используйте запущенный Docker Desktop/WSL 2. Проверено с Docker 27.5.1, Compose 2.32.4, 4 CPU и 6 ГБ памяти Docker. Kafka ограничена 1.5 ГБ, ClickHouse — 2 ГБ. Python и ClickHouse отдельно устанавливать не нужно.
+Нужны Git, Docker Desktop с Linux-контейнерами и Compose v2. Рекомендуется 4 CPU и 8 ГБ памяти Docker. Обучение использует CPU и два потока. Первое скачивание образов, загрузка CSV и начальное обучение занимают несколько минут.
 
-~~~bash
-git clone --branch ht-2 https://github.com/klyuchnikova/real-time-fraud-detection.git
+```bash
+git clone --branch ht-3 https://github.com/klyuchnikova/real-time-fraud-detection.git
 cd real-time-fraud-detection
 docker version
 docker compose version
-~~~
+```
 
-Создайте конфигурацию. PowerShell:
+Если `.env` ещё нет, создайте его: PowerShell — `Copy-Item .env.example .env`; Bash — `cp .env.example .env`.
 
-~~~powershell
-Copy-Item .env.example .env
-~~~
+Данные: [teta-ml-1-2025](https://www.kaggle.com/competitions/teta-ml-1-2025). Положите размеченный `train.csv` в `teta-ml-1-2025/train.csv`. Уже скачанный файл используется на месте. Другой путь задаётся `TRAIN_DATA_CSV` в `.env`; файл монтируется только для чтения. `test.csv` используется лишь для отправки транзакций через интерфейс. CSV и секреты не входят в Git.
 
-Bash:
-
-~~~bash
-cp .env.example .env
-~~~
-
-Если .env уже существует, используйте его. Пример содержит пароль локального учебного окружения. После первого старта пароль должен соответствовать пользователю в сохранённом томе ClickHouse.
-
-~~~bash
-docker compose up -d
-docker compose build tools
+```bash
+docker compose config --quiet
+docker compose build artifact-init airflow-init interface
+docker compose up -d --no-build
 docker compose ps -a
-docker compose run --rm tools python -m scripts.check_environment
-~~~
+docker compose logs --tail=50 data-init model-init airflow-init
+```
 
-Kafka и ClickHouse должны быть healthy; kafka-volume-init, kafka-init и clickhouse-init — Exited (0). Compose ожидает готовность сервисов и применение DDL перед tools. В проверенной версии Compose up --wait считает завершившийся init ошибкой даже при коде 0, поэтому используем up -d и проверку через tools.
+Init-сервисы должны завершиться с кодом 0. Kafka, PostgreSQL, Airflow и интерфейс должны работать; скоринг и sink — оставаться запущенными. Сначала применяются миграции, загружается CSV и обучается первая версия, затем запускается Airflow.
 
-Compose-проект real-time-fraud-detection-ht2 имеет собственные тома и локальные порты 9094/8123. Для других портов добавьте KAFKA_HOST_PORT и CLICKHOUSE_HTTP_PORT в .env. Закреплены apache/kafka:4.3.1, clickhouse/clickhouse-server:26.8.20.9, Python 3.12.12 и [requirements.txt](requirements.txt).
+Проект `real-time-fraud-detection-ht3` имеет собственные тома. Если другой проект занял порты, остановите его или измените `KAFKA_HOST_PORT`, `AIRFLOW_WEB_PORT`, `STREAMLIT_PORT`.
 
-## Демонстрация без скачивания данных
+| Интерфейс | Адрес | Доступ |
+| --- | --- | --- |
+| Airflow | [localhost:8081](http://localhost:8081) | admin / admin |
+| Streamlit | [localhost:8501](http://localhost:8501) | Без пароля |
+| Kafka с хоста | localhost:9094 | В сети: kafka:19092 |
 
-[examples/analytics_demo.csv](examples/analytics_demo.csv) содержит 9 транзакций и 5 регионов, равные и отрицательные суммы, CSV-кавычки/запятые.
+Учётные данные Airflow задаются `AIRFLOW_ADMIN_USER` и `AIRFLOW_ADMIN_PASSWORD` до первого запуска. Прикладная база PostgreSQL — `fraud`, отдельная база метаданных — `airflow`; порт PostgreSQL наружу не публикуется.
 
-~~~bash
-docker compose run --rm tools python -m scripts.load_csv_to_kafka examples/analytics_demo.csv --manifest reports/demo_manifest.json
-docker compose run --rm tools python -m scripts.export_results --manifest reports/demo_manifest.json --output results/demo_max_transaction_by_state.csv
-~~~
+## Устройство проекта
 
-Ожидается status=success, selected_rows=confirmed_messages=9, verified_unique_records=9, regions=5. Итог показан в экспортированном CSV. Для NY две операции имеют сумму 87.80; победитель определяется ID.
+Поток: CSV → размеченная витрина → DAG обучения → общий каталог моделей → скоринг. Онлайн-поток: Streamlit → Kafka transactions → скоринг → Kafka scores → PostgreSQL → Streamlit.
 
-Чтение CSV вынесено из прежнего Streamlit-загрузчика в [common/schema.py](common/schema.py). CLI использует общий контракт и добавляет проверку типов, идентификаторы и подтверждение доставки. Прежний интерфейс также использует этот reader.
+`dags/` содержит графы, `pipeline/` — функции задач, `common/features.py` — общие признаки, `common/registry.py` — проверку и публикацию комплектов. SQL включает явную миграцию `model_version`.
 
-## Полный датасет
+- `artifacts/models/versions/<версия>/` — модель, признаки, метрики, окно и контрольные суммы.
+- `artifacts/models/active.json` — активная версия.
+- `artifacts/work/` — снимки и результаты для retry.
+- `artifacts/dq_reports/` — HTML и JSON DQ рядом с каталогом моделей.
 
-Скачайте данные по [ссылке задания](https://www.kaggle.com/t/1918f3f6435300327d38d6c596f97394) соревнования teta-ml-1-2025. Положите test.csv в teta-ml-1-2025/test.csv. Каталог подключён к tools только для чтения: уже распакованные файлы перекладывать не требуется. Источники исключены из Git и Docker build context.
+ClickHouse и компоненты только ДЗ №2 удалены из этой ветки. Прошлые работы доступны в `main` и `ht-2`; архивные папки не создаются.
 
-~~~bash
-docker compose run --rm tools python -m scripts.load_csv_to_kafka teta-ml-1-2025/test.csv
-docker compose run --rm tools python -m scripts.export_results
-~~~
+## Три DAG
 
-Producer проверяет CSV, отправляет записи и сохраняет reports/load_manifest.json. Экспорт ожидает загрузку, сравнивает **все поля каждой уникальной записи** с независимым CSV-эталоном, сравнивает оба SQL и пишет results/max_transaction_by_state.csv через CSVWithNames. CSV создаётся Python, без зависимости от кодировки shell-redirection.
+Расписание: каждые пять минут, `*/5 * * * *`, UTC, `catchup=False`, `max_active_runs=1`. Графы включены при создании. Ручной запуск — Trigger DAG в UI; вкладка Graph показывает зависимости.
 
-Приложенный результат: 262 144 записи, 51 регион (50 штатов и DC). SHA-256 test.csv: 4129db5d9079f907d9a38aefc170f5e105a650a8273457aaae02a1f735516eac. [Профиль данных](reports/dataset_profile.json) также содержит сведения о train: 786 431 строка и target. Train поддерживается отдельной загрузкой; sample_submition.csv — шаблон соревнования и не принимается загрузчиком транзакций.
+| DAG | Цепочка |
+| --- | --- |
+| supply_labeled_batch | Резервирование → перенос дат → вставка → очистка истории |
+| retrain_model | Окно → подготовка → обучение → сравнение → сохранение → публикация при допуске → фиксация месяца |
+| data_quality | Снимок → проверки → HTML → итоговый статус |
 
-Для небольшой части test.csv:
+```bash
+docker compose exec airflow-scheduler airflow dags trigger data_quality
+docker compose exec airflow-scheduler airflow dags trigger retrain_model
+docker compose exec airflow-scheduler airflow dags trigger supply_labeled_batch
+docker compose exec airflow-scheduler airflow dags list-import-errors
+```
 
-~~~bash
-docker compose run --rm tools python -m scripts.load_csv_to_kafka teta-ml-1-2025/test.csv --limit 1000 --manifest reports/prefix_manifest.json
-docker compose run --rm tools python -m scripts.export_results --manifest reports/prefix_manifest.json --output results/prefix_max.csv
-~~~
+Trigger создаёт запуск; дождитесь успешного завершения в UI. Если следующего обучаемого месяца нет, обработка пропускается без сдвига указателя.
 
-dataset_id учитывает SHA-256 файла и число выбранных строк. Demo, prefix, train и полный test изолированы. Повтор той же выборки получает прежние ID. Загрузчик делает проход проверки, проход отправки и дополнительную проверку хеша файла; память не растёт с размером CSV. При ошибке доставки manifest получает failed и экспорт запрещён.
+## Данные и признаки
 
-## DDL и запрос
+Весь train.csv загружается один раз. Хеш источника и строки фиксируются одной транзакцией; повтор не создаёт дубликатов. Смена исходного файла в существующем томе вызывает ошибку: нужен согласованный сброс базы и артефактов.
 
-Файлы [sql/clickhouse](sql/clickhouse):
+Окно — три последовательных месяца: первые два для train, последний для test. Начало — первые три месяца исходных данных. После обработки сдвиг ровно на месяц; случайного split нет. Первая версия обучается теми же функциями, что DAG. До её публикации сообщения не подтверждаются.
 
-- 001_baseline.sql — контрольная MergeTree для benchmark.
-- 002_optimized.sql — самостоятельный итоговый DDL базы, Kafka Engine, MergeTree, AggregatingMergeTree и двух MV. Применяется автоматически clickhouse-init.
-- 003_max_transaction_by_state_raw.sql — максимум непосредственно по транзакциям.
-- 004_max_transaction_by_state.sql — итоговый запрос через argMaxMerge.
+Собственные признаки: исходные категории, календарные признаки, циклические признаки часа и месяца, логарифмы суммы и населения, расстояние между клиентом и продавцом. Имена и адресные строки исключены. Target encoding отсутствует. Значения для заполнения числовых пропусков вычисляются только на train; неизвестные категории принимаются как строки. Преобразование едино для обучения и inference.
 
-Ищется категория **отдельной самой крупной транзакции**, а не категория с наибольшей суммой всех операций. Сравнение по (amount, transaction_id): при равной сумме выбираем лексикографически больший ID. ID — SHA-256 строки dataset_id:row_index. Оба SQL используют одинаковый порядок и возвращают us_state, cat_id, max_amount, transaction_id, сортируя по штату.
+Поставка берёт существующие строки и переносит время в следующий после максимального месяца витрины. По умолчанию `SUPPLY_BATCH_SIZE=100000`, `HISTORY_MONTHS=36`. Время суток сохраняется, отсутствующий день ограничивается концом месяца. Время без timezone технически трактуется как UTC без пересчёта по штату.
 
-SQL принимает database:Identifier и dataset_id:String; CLI подставляет их из manifest. Для запуска в clickhouse-client передайте --param_database=fraud_analytics и --param_dataset_id=<dataset_id> вместе с содержимым SQL. Воспроизводимый экспорт выполняется командой выше.
+Хранятся 36 месяцев, включая самый новый. Очистка не удаляет необработанное окно: при слишком быстрой поставке она завершится ошибкой и повторит тот же батч после продвижения обучения. Указатели поставки и обучения независимы; обучение сначала последовательно проходит имеющуюся историю, поставка добавляет месяцы за последней исходной датой.
 
-amount хранится как Decimal64(2), post_code — String с ведущими нулями. Время источника не имеет timezone: сохраняется исходное время с технической интерпретацией UTC, без пересчёта по штату. Сохранены все 17 исходных полей, target — Nullable(UInt8), для test это NULL. Дополнительно: row_index, ID набора/транзакции и Kafka topic/partition/offset.
+## Допуск и публикация
 
-Kafka Engine имеет семантику at least once: сырые записи могут дублироваться. Повторы одной операции не меняют max; argMaxMerge объединяет состояния при чтении до фоновых слияний. Это не exactly once и не решение для сумм/счётчиков. IF NOT EXISTS не мигрирует существующую схему: при изменении DDL потребуется migration или пересоздание учебного окружения с replay. MV получает новые вставки; для уже существующих данных нужен backfill.
+Кандидат и активная версия оцениваются на **одних строках свежего test-месяца**. Метрики другого месяца напрямую не сравниваются.
 
-## Оптимизация
+Допуск: одновременно не ухудшились PR-AUC (`average_precision_score`) и ROC-AUC с погрешностью `1e-8`. Равенство допускается. Для первой версии предшественника нет; нужны корректный комплект и конечные метрики. Оба класса обязательны в train и test. `TRAIN_ITERATIONS=100` по умолчанию.
 
-MergeTree сортируется по (dataset_id, us_state, transaction_time, transaction_id). LowCardinality используется для штатов, категорий, пола и Kafka topic; ZSTD — для сжатия, Delta — для времени, индекса и offset. Партиции, TTL и skipping indexes не добавлены: запрос ищет максимум по всем данным выбранного набора.
+Сохраняются признаки, окно, метрики обеих версий, решение и контрольные суммы. Отклонённый кандидат не становится активным, но после успешного сохранения кандидата и решения его месяц считается обработанным. Это позволяет продолжить обработку истории.
 
-Главное ускорение даёт state_max: MV поддерживает argMaxState по (dataset_id, us_state), SQL объединяет его через argMaxMerge. Цена — дополнительная работа при вставке и отдельная таблица. Витрина предназначена для целевого запроса; другая аналитика использует сырые данные.
+Полный комплект проверяется до атомарной замены active.json. Retry использует прежний снимок, ID и решение. Сбой после публикации до фиксации месяца восстанавливается без двойного сдвига; завершённый старый запуск не перезаписывает более новую версию.
 
-~~~bash
-docker compose run --rm tools python -m scripts.benchmark_clickhouse --merge
-~~~
+Скоринг проверяет указатель перед каждой транзакцией и меняет модель в памяти только после проверки нового комплекта. При повреждённом обновлении сохраняет прежнюю рабочую версию. model_version относится к фактическому вычислению.
 
-Benchmark очищает только контрольную transactions_baseline и копирует выбранный dataset. --merge явно выполняет OPTIMIZE FINAL для трёх таблиц перед измерением; корректность без слияний проверяется отдельным тестом. После одного прогрева выполняются 7 запусков каждого варианта в меняющемся порядке, use_query_cache=0, max_threads=2; кеш файлов остаётся прогретым. Метрики читаются из system.query_log, размеры — из system.parts. Отчёты перезаписываются.
+## Data Quality
 
-Измерение на полном test.csv:
+Проверяется фиксированное окно, ожидающее обработки:
 
-| Вариант | Медиана, сервер | Строк прочитано | Байтов прочитано | Память запроса |
-| --- | ---: | ---: | ---: | ---: |
-| baseline | 164 мс | 262 144 | 42 080 652 | 9 497 064 |
-| optimized raw | 164 мс | 262 144 | 37 748 736 | 7 538 579 |
-| aggregate | 6 мс | 56 | 11 886 | 4 509 707 |
+| Правило | Условие |
+| --- | --- |
+| Обязательные поля | 17 исходных колонок, target и ID присутствуют и заполнены; набор непустой |
+| ID | Непустые уникальные значения |
+| Время | transaction_time преобразуется в дату |
+| Разметка | target равен 0 или 1 |
+| Числа | Сумма и население конечны, неотрицательны |
+| Координаты | Обе широты от −90 до 90, долготы от −180 до 180 |
+| Окно и классы | Все три месяца, оба класса в train и test |
 
-Размер bytes_on_disk: baseline — 42 761 506 байт, optimized raw — 20 799 695, агрегаты — 6 260. Суммарное оптимизированное хранение — примерно 49% контрольного. Raw/aggregate дополнительно содержали 9 demo-строк и 5 demo-регионов; baseline — только test. Поэтому агрегат прочитал 56 состояний, а вернул 51. Кодеки уменьшили размер и чтение, но не изменили медиану времени этого запроса. Время зависит от машины и нагрузки.
+Откройте `artifacts/dq_reports/dq-<ID>.html` браузером. Отчёт содержит набор, время UTC, число строк и нарушения каждого правила; рядом JSON. При нарушениях HTML сохраняется до завершения DAG ошибкой. Обучение также проверяет свой снимок.
 
-Подробности: [benchmark.csv](reports/benchmark.csv), [benchmark_summary.json](reports/benchmark_summary.json), [storage.csv](reports/storage.csv). Benchmark временно хранит дополнительную копию исходных записей.
+## Проверка версии и тесты
 
-## Тесты и рестарт
+```bash
+docker compose run --rm tools python -m scripts.smoke_stack
+docker compose exec postgres psql -U fraud -d fraud -c "SELECT transaction_id, score, fraud_flag, model_version, received_at FROM transaction_scores ORDER BY received_order DESC LIMIT 20;"
+docker compose exec scoring-service python -c "from common.registry import active_version; print(active_version('/shared/models'))"
+docker compose exec postgres psql -U fraud -d fraud -c "SELECT version, test_month, status FROM training_runs ORDER BY created_at DESC LIMIT 10;"
+docker compose exec postgres psql -U fraud -d fraud -c "SELECT * FROM training_state;"
+```
 
-~~~bash
-docker compose run --rm tools python -m unittest discover -s tests -p test_csv_loader.py -v
-docker compose run --rm tools python -m unittest discover -s tests/integration -v
-~~~
+Smoke test отправляет свежую транзакцию и сверяет Kafka scores с PostgreSQL. В Streamlit можно загрузить examples/demo.csv или test.csv и посмотреть таблицу результатов с версией.
 
-9 тестов проверяют CSV/BOM/кавычки, target, Decimal, типы, ID, acknowledgements и timeout очереди. 4 интеграционных теста выполняют настоящий DDL, проверяют кодеки/движки, повторное применение без потери данных, ошибочный DDL, блоки до слияний, равные суммы, новый максимум, изоляцию, Kafka replay, все поля и экспорт. Ошибочный JSON проверяется через system.kafka_consumers. Каждый тест использует случайную базу/топик/group и удаляет только их. Старые ML-тесты относятся к hw1 и требуют его dependencies.
+Отправьте транзакцию до и после retrain_model. При допуске появится новая версия без рестарта скоринга. При ухудшении метрик прежняя версия — правильный результат; решение видно в metadata.json кандидата.
 
-~~~bash
-docker compose restart kafka clickhouse
-docker compose run --rm tools python -m scripts.export_results --output results/restart_check.csv
-~~~
+```bash
+docker compose run --rm tools python -m unittest discover -s tests -v
+docker compose run --rm -e INTEGRATION_TESTS=1 tools python -m unittest discover -s tests/integration -v
+docker compose exec airflow-scheduler python -m unittest tests.test_dags -v
+docker compose exec -e INTERFACE_TESTS=1 interface python -m unittest tests.test_interface -v
+```
 
-После рестарта проверены все 262 144 записи и 51 регион; SHA-256 результата совпал с первоначальным. При replay raw_rows может вырасти, а число уникальных транзакций и максимум остаются прежними.
+Первый запуск проверяет признаки, split, gate, DQ и горячее обновление; пропускает тесты PostgreSQL и Airflow. Второй использует отдельные случайные схемы PostgreSQL и удаляет только их. Третий проверяет реальные DAG и их графы. Четвёртый проверяет таблицу Streamlit без браузера; перед ним выполните smoke test.
+
+Интеграционные сценарии: повтор и откат загрузки, миграция, повтор батча, retention, отказ публикации, сбой после сохранения и публикации, отсутствие месяца. Для восстановления в UI очистите неуспешную задачу и зависимые задачи.
+
+Диагностический вызов тех же функций без Airflow; повторите тот же ID для retry:
+
+```bash
+docker compose run --rm tools python -m pipeline.cli dq --run-id manual-dq-1
+docker compose run --rm tools python -m pipeline.cli retrain --run-id manual-train-1
+docker compose run --rm tools python -m pipeline.cli supply --run-id manual-supply-1
+```
+
+## Отчёт о выполненной работе
+
+Реализованы три DAG: поставка размеченных месяцев, переобучение на скользящем окне и Data Quality. Подготовлены общий препроцессинг для обучения и скоринга, сохранение версионированных комплектов, проверка метрик перед публикацией и обновление скоринга без перезапуска. В Kafka, PostgreSQL и интерфейс добавлен `model_version`. Повторы после сбоев используют сохранённые снимки и состояние, исключая дубли батчей, пропуск месяца и повторный сдвиг окна. Компоненты аналитики ДЗ №2 удалены из этой ветки.
+
+Приёмочная проверка выполнена с новыми томами проекта ДЗ №3. Применение миграций, загрузка данных, начальное обучение и инициализация Airflow завершились успешно. Повторная инициализация сохранила данные и единственную запись об исходном файле.
+
+| Проверка | Результат |
+| --- | --- |
+| Общие признаки, временной split, метрики, DQ и обновление в памяти | 14 unit-тестов прошли |
+| Загрузка, миграция, повтор батча, retention и восстановление обучения | 6 интеграционных тестов PostgreSQL прошли |
+| Импорт трёх DAG, зависимости и настройки расписания | 1 тест прошёл |
+| Отображение версии в таблице Streamlit | 1 тест прошёл |
+| **Всего отдельных тестов** | **22 прошли** |
+| Ручные запуски всех трёх DAG | Все задачи завершились успешно |
+| Запуски по расписанию после обновления окружения | Все 15 задач трёх DAG завершились успешно |
+| Сборка образов и совместимость зависимостей | Проверки прошли |
+
+Первичная загрузка добавила **786 431 размеченную строку**. На момент приёмочной проверки поставка дописала три батча по **100 000 строк** за апрель, май и июнь 2020 года; всего в витрине было **1 086 431 строка**. Созданы HTML-отчёты с результатами семи DQ-правил. Проверен также сценарий, в котором HTML сохраняется до завершения проверки ошибкой.
+
+Кандидаты с ухудшением метрик были сохранены и отклонены без изменения активной версии. Для принятого кандидата сравнение выполнено на одних **64 975 строках июля 2019 года**; обучение использовало **118 902 строки мая–июня**:
+
+| Метрика | Предыдущая версия | Кандидат |
+| --- | ---: | ---: |
+| PR-AUC (`average_precision`) | 0.536781 | 0.712599 |
+| ROC-AUC | 0.977179 | 0.981915 |
+
+После публикации новая транзакция получила версию `v-201907-24279da1a7eb` вместо `v-201903-333c04dd151a`; результат совпал в Kafka и PostgreSQL. ID контейнера скоринга, время запуска и счётчик рестартов до и после смены версии совпали. Каталог моделей смонтирован в скоринг только для чтения. После применения окончательных образов повторно проверены поток транзакции, восстановление, графы Airflow и таблица результатов.
+
+Визуальный просмотр `localhost` браузером был заблокирован политикой окружения. Airflow проверен через API, интерфейс — штатным тестовым раннером Streamlit; визуальная проверка браузером не выполнялась.
+
+Подробные результаты, ID запусков, метрики, версии и доказательство отсутствия рестарта сохранены в [reports/hw3_validation.json](reports/hw3_validation.json).
+
+Приёмочную демонстрацию можно повторить командой `docker compose run --rm tools python -m scripts.validate_stack`. Она запускает DAG через API и обрабатывает до пяти новых окон до публикации подходящего кандидата; если все кандидаты отклонены, сообщает об отсутствии смены версии. Обычная работа DAG при отказе в публикации остаётся успешной.
 
 ## Диагностика и остановка
 
-~~~bash
+```bash
 docker compose ps -a
-docker compose logs --tail=100 kafka clickhouse kafka-init clickhouse-init
+docker compose logs --tail=100 data-init model-init airflow-init airflow-scheduler scoring-service scores-sink
 docker compose down
-~~~
+```
 
-down сохраняет тома. docker compose down -v удаляет **данные именно этого Compose-проекта**, после чего CSV надо загрузить заново. При проблеме проверьте Engine, память/порты, пароль и логи init. Ошибочные сообщения не пропускаются молча: kafka_skip_broken_messages=0; ожидание загрузки ограничено timeout и выводит диагностику consumer.
+down сохраняет данные. Для чистого повторного старта остановите проект, выполните `docker compose down -v` и очистите сгенерированные artifacts/models, artifacts/work, artifacts/dq_reports. База и артефакты — единое состояние; сбрасывать только одну часть нельзя. Исходные CSV и другие проекты не удаляются.
 
-Проверен запуск из чистой локальной копии коммита a2f344c с новыми томами: сборка, environment check, demo producer/export и интеграционные тесты прошли. Датасет и .env из рабочего проекта не копировались. Отчёт — [reports/validation.json](reports/validation.json). CSV сохраняются в Git без преобразования переводов строк, чтобы не менять хеши и ID.
+После изменения кода пересоберите образы и выполните `docker compose up -d --no-build`. Миграции и безопасная повторная загрузка доступны через `docker compose run --rm data-init`.
 
-## Прошлое задание
-
-Код скоринга, PostgreSQL и Streamlit сохранён. [README.hw1.md](README.hw1.md), [TASK.hw1.md](TASK.hw1.md). Запуск: docker compose -p real-time-fraud-detection-hw1 -f docker-compose.hw1.yml up -d --build. Hw1 и hw2 используют Kafka-порт 9094: сначала остановите hw2, если нужен hw1.
-
-Документация: [Kafka Engine](https://clickhouse.com/docs/engines/table-engines/integrations/kafka), [AggregatingMergeTree](https://clickhouse.com/docs/engines/table-engines/mergetree-family/aggregatingmergetree), [argMax](https://clickhouse.com/docs/sql-reference/aggregate-functions/reference/argmax), [кодеки](https://clickhouse.com/docs/sql-reference/statements/create/table#column-compression-codecs).
+Документация: [Airflow в Docker](https://airflow.apache.org/docs/apache-airflow/2.10.5/howto/docker-compose/index.html), [LocalExecutor](https://airflow.apache.org/docs/apache-airflow/2.10.5/core-concepts/executor/local.html).

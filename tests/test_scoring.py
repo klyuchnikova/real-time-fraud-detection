@@ -1,55 +1,50 @@
-import csv
-import math
+import json
+import tempfile
 import unittest
 from pathlib import Path
-
-from common.schema import INPUT_COLUMNS
-from scoring_service.preprocessing import prepare_features
-from scoring_service.scorer import Scorer
-
-
-ROOT = Path(__file__).resolve().parents[1]
-
+from common.registry import publish, atomic_json, save_bundle, load_bundle
+from scoring_service.scorer import Scorer, ModelNotReady
+from tests.support import bundle, frame
 
 class ScoringTest(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls):
-        cls.scorer = Scorer(
-            str(ROOT / "artifacts" / "my_catboost.cbm"),
-            str(ROOT / "artifacts" / "preprocessor.json"),
-        )
-        with (ROOT / "examples" / "demo.csv").open(newline="", encoding="utf-8") as file:
-            reader = csv.DictReader(file)
-            cls.columns = reader.fieldnames
-            cls.rows = list(reader)
+    def test_hot_reload_and_corruption_fallback(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            scorer = Scorer(root)
+            with self.assertRaises(ModelNotReady):
+                scorer.refresh()
+            bundle(root,"v-one")
+            publish(root,"v-one")
+            payload = {"transaction_id":"one","data":frame().iloc[0].to_dict()}
+            result = scorer.score(payload)
+            self.assertEqual(result["model_version"],"v-one")
+            self.assertEqual(set(result),{"transaction_id","score","fraud_flag","model_version"})
+            self.assertTrue(0 <= result["score"] <= 1)
+            bundle(root,"v-two")
+            publish(root,"v-two")
+            self.assertEqual(scorer.score(payload)["model_version"],"v-two")
+            bundle(root,"v-broken")
+            (root/"versions/v-broken/model.bin").write_bytes(b"corrupt")
+            with self.assertRaises(ValueError):
+                publish(root,"v-broken")
+            atomic_json(root/"active.json",{"model_version":"v-broken"})
+            self.assertEqual(scorer.score(payload)["model_version"],"v-two")
+            (root/"active.json").write_text("broken",encoding="utf-8")
+            self.assertEqual(scorer.score(payload)["model_version"],"v-two")
 
-    def test_demo_schema_and_scores(self):
-        self.assertEqual(self.columns, list(INPUT_COLUMNS))
-        self.assertEqual(len(self.rows), 3)
-        expected_scores = (0.0021094796892489193, 0.0009171333159702732, 0.001080082764109121)
-        for index, row in enumerate(self.rows):
-            features = prepare_features(row, self.scorer.artifact)
-            self.assertEqual(features.columns.tolist(), self.scorer.model.feature_names_)
-            result = self.scorer.score({"transaction_id": f"demo-{index}", "data": row})
-            self.assertEqual(set(result), {"transaction_id", "score", "fraud_flag"})
-            self.assertTrue(math.isfinite(result["score"]))
-            self.assertGreaterEqual(result["score"], 0)
-            self.assertLessEqual(result["score"], 1)
-            self.assertIn(result["fraud_flag"], (0, 1))
-            self.assertAlmostEqual(result["score"], expected_scores[index], places=8)
-
-    def test_missing_field_is_rejected(self):
-        row = self.rows[0].copy()
-        row.pop("amount")
-        with self.assertRaisesRegex(ValueError, "Missing fields: amount"):
-            self.scorer.score({"transaction_id": "bad", "data": row})
-
-    def test_invalid_time_is_rejected(self):
-        row = self.rows[0].copy()
-        row["transaction_time"] = "wrong-time"
+    def test_bad_payload_and_threshold(self):
         with self.assertRaises(ValueError):
-            self.scorer.score({"transaction_id": "bad-time", "data": row})
+            Scorer("/unused",1.1)
+        scorer = Scorer("/unused")
+        for value in (None,[],{},{"transaction_id":"","data":{}},{"transaction_id":"a","data":[]}):
+            with self.assertRaises(ValueError):
+                scorer.score(value)
 
-
-if __name__ == "__main__":
-    unittest.main()
+    def test_bundle_retry_and_path_safety(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            bundle(temporary,"v-one")
+            load_bundle(temporary,"v-one")
+            with self.assertRaises(ValueError):
+                load_bundle(temporary,"../outside")
+            with self.assertRaises(ValueError):
+                publish(temporary,"../outside")

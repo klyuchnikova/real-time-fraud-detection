@@ -1,0 +1,465 @@
+{
+  "active_version": "v-201907-24279da1a7eb",
+  "checked_at": "2026-11-02T16:53:00.741384+00:00",
+  "dags": {
+    "data_quality": {
+      "tasks": 4
+    },
+    "retrain_model": {
+      "tasks": 7
+    },
+    "supply_labeled_batch": {
+      "tasks": 4
+    }
+  },
+  "html_reports": [
+    "dq-52025e75a24bb86cf9e7.html",
+    "dq-74d8c8551fb742ebb0d4.html",
+    "dq-be4af07dee95d8fcb9e4.html"
+  ],
+  "labeled_rows": 1086431,
+  "manual_runs": [
+    {
+      "dag_id": "data_quality",
+      "run_id": "acceptance-c7cf21a11eae442a94c181a673e53ef6",
+      "state": "success",
+      "tasks": [
+        {
+          "state": "success",
+          "task_id": "evaluate_dataset"
+        },
+        {
+          "state": "success",
+          "task_id": "write_report"
+        },
+        {
+          "state": "success",
+          "task_id": "assert_report"
+        },
+        {
+          "state": "success",
+          "task_id": "snapshot_dataset"
+        }
+      ]
+    },
+    {
+      "dag_id": "supply_labeled_batch",
+      "run_id": "acceptance-1cb9229315a140ffa050afe1013c753c",
+      "state": "success",
+      "tasks": [
+        {
+          "state": "success",
+          "task_id": "reserve_batch"
+        },
+        {
+          "state": "success",
+          "task_id": "prepare_batch"
+        },
+        {
+          "state": "success",
+          "task_id": "insert_batch"
+        },
+        {
+          "state": "success",
+          "task_id": "prune_history"
+        }
+      ]
+    },
+    {
+      "dag_id": "retrain_model",
+      "run_id": "acceptance-d0cc92c2f6a3494bb53394d6f57185c3",
+      "state": "success",
+      "tasks": [
+        {
+          "state": "success",
+          "task_id": "evaluate_candidate"
+        },
+        {
+          "state": "success",
+          "task_id": "train_candidate"
+        },
+        {
+          "state": "success",
+          "task_id": "reserve_window"
+        },
+        {
+          "state": "success",
+          "task_id": "prepare_dataset"
+        },
+        {
+          "state": "success",
+          "task_id": "save_candidate"
+        },
+        {
+          "state": "success",
+          "task_id": "publish_candidate"
+        },
+        {
+          "state": "success",
+          "task_id": "finish_month"
+        }
+      ]
+    },
+    {
+      "dag_id": "retrain_model",
+      "run_id": "acceptance-d762fc2f973d4c6ebcfdf2f061607144",
+      "state": "success",
+      "tasks": [
+        {
+          "state": "success",
+          "task_id": "train_candidate"
+        },
+        {
+          "state": "success",
+          "task_id": "evaluate_candidate"
+        },
+        {
+          "state": "success",
+          "task_id": "save_candidate"
+        },
+        {
+          "state": "success",
+          "task_id": "finish_month"
+        },
+        {
+          "state": "success",
+          "task_id": "reserve_window"
+        },
+        {
+          "state": "success",
+          "task_id": "prepare_dataset"
+        },
+        {
+          "state": "success",
+          "task_id": "publish_candidate"
+        }
+      ]
+    }
+  ],
+  "new_version_metadata": {
+    "dataset": {
+      "passed": true,
+      "rows": 183877,
+      "rules": [
+        {
+          "passed": true,
+          "rule": "Required fields",
+          "violations": 0
+        },
+        {
+          "passed": true,
+          "rule": "Unique nonempty transaction IDs",
+          "violations": 0
+        },
+        {
+          "passed": true,
+          "rule": "Valid transaction timestamps",
+          "violations": 0
+        },
+        {
+          "passed": true,
+          "rule": "Binary target",
+          "violations": 0
+        },
+        {
+          "passed": true,
+          "rule": "Finite nonnegative amount and population",
+          "violations": 0
+        },
+        {
+          "passed": true,
+          "rule": "Coordinate ranges",
+          "violations": 0
+        },
+        {
+          "passed": true,
+          "rule": "Three months and both classes in train/test",
+          "violations": 0
+        }
+      ],
+      "test_month": "2019-07-01",
+      "test_rows": 64975,
+      "train_rows": 118902,
+      "window_start": "2019-05-01"
+    },
+    "decision": {
+      "accepted": true,
+      "baseline": {
+        "average_precision": 0.5367812893874649,
+        "roc_auc": 0.9771787139326463
+      },
+      "baseline_version": "v-201903-333c04dd151a",
+      "candidate": {
+        "average_precision": 0.7125994677056827,
+        "roc_auc": 0.9819150513328905
+      },
+      "test_month": "2019-07-01",
+      "test_rows": 64975
+    },
+    "model_version": "v-201907-24279da1a7eb",
+    "saved_at": "2026-11-02T16:58:39.440437+00:00",
+    "sha256": {
+      "model.bin": "05fc2d394d4d20e2f4f4e6644b6f2d991d4ec4ad791f38c955f0a10c98ea11ae",
+      "preprocessor.json": "0e09b3cb4e8fd08c1b00ffa627d092975226013b23f676fdfa499a7a3ad6f401"
+    },
+    "snapshot_sha256": "50fd023a686731a44b3a678976e8c792d6deaeb8c3f3b98fbbc1b28d36c48b54",
+    "test_month": "2019-07-01",
+    "window_start": "2019-05-01"
+  },
+  "score_after": {
+    "fraud_flag": 0,
+    "model_version": "v-201907-24279da1a7eb",
+    "score": 0.002463574293406774,
+    "transaction_id": "3cbe12e9-38c4-44a2-bf02-c37a78af9436"
+  },
+  "score_before": {
+    "fraud_flag": 0,
+    "model_version": "v-201903-333c04dd151a",
+    "score": 0.006973574231690614,
+    "transaction_id": "533b3b34-0c64-49bf-9487-e56faba37a89"
+  },
+  "sources": [
+    {
+      "rows": 786431,
+      "sha256": "2fd291f0d66cbb1f3c3e442396f3725d4cbde650d5dd0c16322c5230d3776b99"
+    }
+  ],
+  "status": "success",
+  "supply_batches": [
+    {
+      "batch_id": "supply-202004",
+      "rows": 100000,
+      "status": "complete"
+    },
+    {
+      "batch_id": "supply-202005",
+      "rows": 100000,
+      "status": "complete"
+    },
+    {
+      "batch_id": "supply-202006",
+      "rows": 100000,
+      "status": "complete"
+    }
+  ],
+  "scorer_restart_evidence": {
+    "before": "0cb58c1ef6b3c5fb314aebd261f1477df5bc2461994ea8079d1a9dcb4bc566b4 2026-11-02T16:49:35.968924901Z 0",
+    "after": "0cb58c1ef6b3c5fb314aebd261f1477df5bc2461994ea8079d1a9dcb4bc566b4 2026-11-02T16:49:35.968924901Z 0",
+    "unchanged": true
+  },
+  "checks": {
+    "unit": {
+      "passed": 14,
+      "skipped_in_app_image": 8
+    },
+    "postgres_integration": {
+      "passed": 6
+    },
+    "airflow_graphs": {
+      "passed": 1
+    },
+    "streamlit": {
+      "passed": 1
+    },
+    "total_unique_passed": 22
+  },
+  "clean_start": {
+    "project": "real-time-fraud-detection-ht3",
+    "new_postgres_and_kafka_volumes": true,
+    "training_rows": 786431
+  },
+  "visual_browser_check": "blocked_by_managed_origin_policy; API and Streamlit AppTest used",
+  "publication_decisions": [
+    {
+      "version": "v-201903-333c04dd151a",
+      "test_month": "2019-03-01",
+      "decision": {
+        "accepted": true,
+        "baseline": null,
+        "baseline_version": null,
+        "candidate": {
+          "average_precision": 0.584943312931267,
+          "roc_auc": 0.966528676895291
+        },
+        "test_month": "2019-03-01",
+        "test_rows": 53328
+      }
+    },
+    {
+      "version": "v-201904-52025e75a24b",
+      "test_month": "2019-04-01",
+      "decision": {
+        "accepted": false,
+        "baseline": {
+          "average_precision": 0.648141531297634,
+          "roc_auc": 0.9800642453090835
+        },
+        "baseline_version": "v-201903-333c04dd151a",
+        "candidate": {
+          "average_precision": 0.6785679151895948,
+          "roc_auc": 0.9790816132865667
+        },
+        "test_month": "2019-04-01",
+        "test_rows": 51274
+      }
+    },
+    {
+      "version": "v-201905-d15aac4e1c35",
+      "test_month": "2019-05-01",
+      "decision": {
+        "accepted": false,
+        "baseline": {
+          "average_precision": 0.5478724657040498,
+          "roc_auc": 0.9765716082117787
+        },
+        "baseline_version": "v-201903-333c04dd151a",
+        "candidate": {
+          "average_precision": 0.5511547171935028,
+          "roc_auc": 0.967259370236109
+        },
+        "test_month": "2019-05-01",
+        "test_rows": 54518
+      }
+    },
+    {
+      "version": "v-201906-74d8c8551fb7",
+      "test_month": "2019-06-01",
+      "decision": {
+        "accepted": false,
+        "baseline": {
+          "average_precision": 0.48339530053521673,
+          "roc_auc": 0.9640628622748134
+        },
+        "baseline_version": "v-201903-333c04dd151a",
+        "candidate": {
+          "average_precision": 0.6148207775955745,
+          "roc_auc": 0.9475486594726164
+        },
+        "test_month": "2019-06-01",
+        "test_rows": 64384
+      }
+    },
+    {
+      "version": "v-201907-24279da1a7eb",
+      "test_month": "2019-07-01",
+      "decision": {
+        "accepted": true,
+        "baseline": {
+          "average_precision": 0.5367812893874649,
+          "roc_auc": 0.9771787139326463
+        },
+        "baseline_version": "v-201903-333c04dd151a",
+        "candidate": {
+          "average_precision": 0.7125994677056827,
+          "roc_auc": 0.9819150513328905
+        },
+        "test_month": "2019-07-01",
+        "test_rows": 64975
+      }
+    }
+  ],
+  "services_after_final_deployment": [
+    {
+      "service": "airflow-init",
+      "state": "exited",
+      "health": "",
+      "exit_code": 0
+    },
+    {
+      "service": "airflow-scheduler",
+      "state": "running",
+      "health": "healthy",
+      "exit_code": 0
+    },
+    {
+      "service": "airflow-webserver",
+      "state": "running",
+      "health": "healthy",
+      "exit_code": 0
+    },
+    {
+      "service": "artifact-init",
+      "state": "exited",
+      "health": "",
+      "exit_code": 0
+    },
+    {
+      "service": "data-init",
+      "state": "exited",
+      "health": "",
+      "exit_code": 0
+    },
+    {
+      "service": "interface",
+      "state": "running",
+      "health": "healthy",
+      "exit_code": 0
+    },
+    {
+      "service": "kafka",
+      "state": "running",
+      "health": "healthy",
+      "exit_code": 0
+    },
+    {
+      "service": "kafka-init",
+      "state": "exited",
+      "health": "",
+      "exit_code": 0
+    },
+    {
+      "service": "kafka-volume-init",
+      "state": "exited",
+      "health": "",
+      "exit_code": 0
+    },
+    {
+      "service": "model-init",
+      "state": "exited",
+      "health": "",
+      "exit_code": 0
+    },
+    {
+      "service": "postgres",
+      "state": "running",
+      "health": "healthy",
+      "exit_code": 0
+    },
+    {
+      "service": "scores-sink",
+      "state": "running",
+      "health": "",
+      "exit_code": 0
+    },
+    {
+      "service": "scoring-service",
+      "state": "running",
+      "health": "",
+      "exit_code": 0
+    }
+  ],
+  "final_deployment_smoke": {
+    "transaction_id": "6a39feaf-b6a0-414b-b5bc-faea38e7ef06",
+    "model_version": "v-201907-24279da1a7eb",
+    "kafka_equals_postgres": true
+  },
+  "dependencies_check": "No broken requirements found in app and Airflow images",
+  "final_audit": {
+    "branch": "ht-3",
+    "head": "d8aab0e5e6df787d5f27242eea1b2dc2bdd06832",
+    "head_equals_ht2": true,
+    "commit_created": false,
+    "models_mount_read_only": true,
+    "initial_source_receipts": 1,
+    "retry_receipts_after_deployment": {
+      "training": 1,
+      "supply": 1
+    },
+    "scheduled_run_after_deployment": {
+      "run_id": "scheduled__2026-11-02T17:00:00+00:00",
+      "data_quality_successful_tasks": 4,
+      "retrain_model_successful_tasks": 7,
+      "supply_labeled_batch_successful_tasks": 4
+    }
+  }
+}

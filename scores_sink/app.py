@@ -14,16 +14,16 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(mess
 logger = logging.getLogger(__name__)
 
 INSERT_SQL = """
-INSERT INTO transaction_scores (transaction_id, score, fraud_flag)
-VALUES (%s, %s, %s)
+INSERT INTO transaction_scores (transaction_id, score, fraud_flag, model_version)
+VALUES (%s, %s, %s, %s)
 ON CONFLICT (transaction_id) DO NOTHING
 """
 
 
-def validate_score(raw: bytes) -> tuple[str, float, int]:
+def validate_score(raw: bytes) -> tuple[str, float, int, str]:
     data = json.loads(raw)
-    if not isinstance(data, dict) or set(data) != {"transaction_id", "score", "fraud_flag"}:
-        raise ValueError("Expected transaction_id, score, fraud_flag")
+    if not isinstance(data, dict) or set(data) != {"transaction_id", "score", "fraud_flag", "model_version"}:
+        raise ValueError("Expected transaction_id, score, fraud_flag, model_version")
     transaction_id = data["transaction_id"]
     if not isinstance(transaction_id, str) or not transaction_id:
         raise ValueError("Invalid transaction_id")
@@ -35,7 +35,10 @@ def validate_score(raw: bytes) -> tuple[str, float, int]:
     fraud_flag = data["fraud_flag"]
     if type(fraud_flag) is not int or fraud_flag not in (0, 1):
         raise ValueError("Invalid fraud_flag")
-    return transaction_id, score, fraud_flag
+    version = data["model_version"]
+    if not isinstance(version, str) or not version.strip():
+        raise ValueError("Invalid model_version")
+    return transaction_id, score, fraud_flag, version
 
 
 def connect(database_url: str):

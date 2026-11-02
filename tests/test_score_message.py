@@ -1,24 +1,21 @@
 import json
 import unittest
-
 from scores_sink.app import validate_score
-
 
 class ScoreMessageTest(unittest.TestCase):
     def test_valid_message(self):
-        payload = {"transaction_id": "abc", "score": 0.7, "fraud_flag": 1}
-        self.assertEqual(validate_score(json.dumps(payload).encode()), ("abc", 0.7, 1))
+        result = validate_score(json.dumps({"transaction_id":"a","score":0.7,"fraud_flag":1,"model_version":"v-1"}).encode())
+        self.assertEqual(result,("a",0.7,1,"v-1"))
 
-    def test_extra_field_is_rejected(self):
-        payload = {"transaction_id": "abc", "score": 0.7, "fraud_flag": 1, "extra": 1}
+    def test_invalid_fields(self):
+        base = {"transaction_id":"a","score":0.7,"fraud_flag":1,"model_version":"v-1"}
+        for field,value in (("score",float("nan")),("score",True),("score",1.1),
+                            ("fraud_flag",True),("fraud_flag",2),("model_version",""),("model_version",None)):
+            with self.subTest(field=field,value=value):
+                with self.assertRaises(ValueError):
+                    validate_score(json.dumps({**base,field:value}).encode())
         with self.assertRaises(ValueError):
-            validate_score(json.dumps(payload).encode())
-
-    def test_non_finite_score_is_rejected(self):
-        payload = {"transaction_id": "abc", "score": float("nan"), "fraud_flag": 1}
+            validate_score(json.dumps({**base,"extra":1}).encode())
+        del base["model_version"]
         with self.assertRaises(ValueError):
-            validate_score(json.dumps(payload).encode())
-
-
-if __name__ == "__main__":
-    unittest.main()
+            validate_score(json.dumps(base).encode())

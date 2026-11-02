@@ -1,5 +1,6 @@
 """Send test transactions and inspect saved scores."""
 
+import csv
 import io
 import json
 import os
@@ -62,8 +63,8 @@ def load_results():
     with psycopg.connect(DATABASE_URL) as connection:
         with connection.cursor() as cursor:
             cursor.execute(
-                """SELECT transaction_id, score, fraud_flag, received_at
-                   FROM transaction_scores WHERE fraud_flag = 1
+                """SELECT transaction_id, score, fraud_flag, model_version, received_at
+                   FROM transaction_scores
                    ORDER BY received_order DESC LIMIT %s""",
                 (10,),
             )
@@ -99,18 +100,18 @@ with results_tab:
         except psycopg.Error:
             st.error("Не удалось прочитать результаты из PostgreSQL. Попробуйте ещё раз через несколько секунд.")
         else:
-            st.subheader("Последние транзакции с флагом фрода")
+            st.subheader("Последние результаты скоринга")
             if fraud_rows:
                 st.dataframe(
                     pd.DataFrame(
                         fraud_rows,
-                        columns=["transaction_id", "score", "fraud_flag", "received_at"],
+                        columns=["transaction_id", "score", "fraud_flag", "model_version", "received_at"],
                     ),
                     hide_index=True,
                     use_container_width=True,
                 )
             else:
-                st.info("Транзакций с флагом фрода пока нет")
+                st.info("Результатов скоринга пока нет")
 
             st.subheader("Распределение скоров последних 100 транзакций")
             if recent_scores:
