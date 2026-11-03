@@ -1,0 +1,144 @@
+version: 2
+models:
+- name: stg_transactions
+  description: 'Normalized facts with calendar and amount segments. Grain: one source
+    transaction.'
+  columns:
+  - name: transaction_id
+    description: Unique technical ID of one source transaction.
+    data_tests:
+    - not_null
+    - unique
+  - name: client_id
+    description: Stable registry identifier.
+    data_tests:
+    - not_null
+    - relationships:
+        arguments:
+          to: ref('stg_clients')
+          field: client_id
+  - name: transaction_time
+    description: UTC timestamp used for all grouping.
+    data_tests:
+    - not_null
+  - name: transaction_date
+    description: UTC calendar date for daily metrics.
+    data_tests:
+    - not_null
+  - name: day_of_week
+    description: ISO weekday calculated with dbt_date; Monday=1 and Sunday=7.
+    data_tests:
+    - not_null
+    - accepted_values:
+        arguments:
+          values:
+          - 1
+          - 2
+          - 3
+          - 4
+          - 5
+          - 6
+          - 7
+  - name: merchant
+    description: Trimmed merchant label used for exact distinct counts.
+    data_tests:
+    - not_null
+  - name: category
+    description: Trimmed transaction category.
+    data_tests:
+    - not_null
+  - name: amount
+    description: Exact nonnegative Decimal(18,2) amount.
+    data_tests:
+    - not_null
+  - name: gender
+    description: Uppercase gender code.
+    data_tests:
+    - not_null
+    - accepted_values:
+        arguments:
+          values:
+          - M
+          - F
+  - name: state_code
+    description: Uppercase state or DC code.
+    data_tests:
+    - not_null
+    - &id001
+      relationships:
+        arguments:
+          to: ref('states')
+          field: state_code
+  - name: target
+    description: Observed binary fraud label.
+    data_tests:
+    - not_null
+    - accepted_values:
+        arguments:
+          values:
+          - 0
+          - 1
+  - name: amount_bucket
+    description: SMALL below 50; MEDIUM below 200; LARGE below the configured threshold;
+      VERY_LARGE otherwise.
+    data_tests:
+    - not_null
+    - accepted_values:
+        arguments:
+          values:
+          - SMALL
+          - MEDIUM
+          - LARGE
+          - VERY_LARGE
+  - name: is_large_transaction
+    description: 1 when amount reaches large_amount_threshold, otherwise 0.
+    data_tests:
+    - not_null
+    - accepted_values:
+        arguments:
+          values:
+          - 0
+          - 1
+- name: stg_clients
+  description: 'Normalized client directory. Grain: one registry client.'
+  columns:
+  - name: client_id
+    description: Persistent integer primary key.
+    data_tests:
+    - not_null
+    - unique
+  - name: first_name
+    description: Trimmed first name.
+    data_tests:
+    - not_null
+  - name: last_name
+    description: Trimmed last name.
+    data_tests:
+    - not_null
+  - name: street
+    description: Trimmed street.
+    data_tests:
+    - not_null
+  - name: city
+    description: Trimmed city.
+    data_tests:
+    - not_null
+  - name: state_code
+    description: Uppercase residence region.
+    data_tests:
+    - not_null
+    - *id001
+  - name: post_code
+    description: Postal code retained as a string.
+    data_tests:
+    - not_null
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - first_name
+        - last_name
+        - street
+        - city
+        - state_code
+        - post_code

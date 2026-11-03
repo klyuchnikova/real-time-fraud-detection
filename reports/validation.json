@@ -1,0 +1,92 @@
+{
+  "status": "success",
+  "source": {
+    "rows": 786431,
+    "frauds": 4504,
+    "fraud_rate_pct": 0.5727139443892726,
+    "total_amount": "55239932.49",
+    "clients": 965,
+    "merchants": 693,
+    "regions": 51
+  },
+  "marts": {
+    "mart_daily_state_metrics": {
+      "rows": 21386,
+      "all_rows_reconciled": true
+    },
+    "mart_fraud_by_category": {
+      "rows": 14,
+      "all_rows_reconciled": true
+    },
+    "mart_fraud_by_state": {
+      "rows": 51,
+      "all_rows_reconciled": true
+    },
+    "mart_customer_risk_profile": {
+      "rows": 965,
+      "all_rows_reconciled": true
+    }
+  },
+  "versions": {
+    "dbt-core": "1.10.23",
+    "dbt-clickhouse": "1.10.3",
+    "clickhouse-connect": "0.10.0"
+  },
+  "dbt_tests": {
+    "total": 118,
+    "statuses": {
+      "pass": 118
+    }
+  },
+  "project_evaluator_tests": {
+    "total": 29,
+    "statuses": {
+      "pass": 29
+    }
+  },
+  "singular_tests": [
+    "assert_aggregate_reconciliation",
+    "assert_calendar_and_shares",
+    "assert_client_registry_integrity",
+    "assert_fraud_rate_bounds",
+    "assert_fraud_reconciliation",
+    "assert_macro_boundaries",
+    "assert_no_negative_amounts",
+    "assert_risk_boundaries"
+  ],
+  "docs_generated": true,
+  "loader_tests": {
+    "tests": 9,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "passed": 9
+  },
+  "documentation_screenshot": "not_provided",
+  "lineage_svg": "docs/lineage.svg",
+  "client_key": "SQLite INTEGER PRIMARY KEY AUTOINCREMENT; UNIQUE identity tuple",
+  "risk_distribution": [
+    {
+      "risk_level": "HIGH",
+      "clients": 57
+    },
+    {
+      "risk_level": "LOW",
+      "clients": 678
+    },
+    {
+      "risk_level": "MEDIUM",
+      "clients": 230
+    }
+  ],
+  "source_receipt": [
+    {
+      "source_sha256": "2fd291f0d66cbb1f3c3e442396f3725d4cbde650d5dd0c16322c5230d3776b99",
+      "registry_uuid": "d9270e2c-8f3f-416c-a3fa-de8634682657",
+      "source_rows": 786431,
+      "fraud_rows": 4504,
+      "total_amount": "55239932.49",
+      "client_count": 965
+    }
+  ]
+}

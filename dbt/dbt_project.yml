@@ -1,0 +1,76 @@
+name: transaction_analytics
+version: 1.0.0
+config-version: 2
+profile: transaction_analytics
+require-dbt-version:
+- '>=1.10.6'
+- <1.11.0
+model-paths:
+- models
+seed-paths:
+- seeds
+test-paths:
+- tests
+macro-paths:
+- macros
+analysis-paths:
+- analyses
+clean-targets:
+- target
+- dbt_packages
+- logs
+flags:
+  require_generic_test_arguments_property: true
+dispatch:
+- macro_namespace: dbt
+  search_order:
+  - dbt_project_evaluator
+  - dbt
+vars:
+  large_amount_threshold: 1000
+  risk_high_pct: 5
+  risk_medium_pct: 1
+  dbt_date:time_zone: UTC
+  dbt_project_evaluator:
+    marts_prefixes:
+    - mart_
+    models_fanout_threshold: 5
+    chained_views_threshold: 4
+    max_depth_dag: 4
+models:
+  transaction_analytics:
+    +persist_docs:
+      relation: true
+      columns: true
+    staging:
+      +materialized: view
+      +schema: staging
+    marts:
+      +materialized: table
+      +schema: marts
+      +engine: MergeTree()
+  dbt_project_evaluator:
+    +schema: evaluation
+    marts:
+      core:
+        int_all_dag_relationships:
+          +materialized: table
+seeds:
+  transaction_analytics:
+    +schema: reference
+    states:
+      +column_types:
+        state_code: String
+        state_name: String
+        region_type: String
+    dbt_project_evaluator_exceptions:
+      +column_types:
+        fct_name: String
+        column_name: String
+        id_to_exclude: String
+        comment: String
+  dbt_project_evaluator:
+    dbt_project_evaluator_exceptions:
+      +enabled: false
+on-run-start:
+- '{{ validate_business_rules() }}'

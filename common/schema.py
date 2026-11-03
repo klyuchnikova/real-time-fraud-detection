@@ -1,4 +1,4 @@
-"""CSV contract shared by the training loader and transaction interface."""
+"""CSV column contract for labeled transaction loading and validation."""
 import csv
 
 INPUT_COLUMNS = (

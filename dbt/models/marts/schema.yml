@@ -1,0 +1,138 @@
+version: 2
+models:
+- name: mart_daily_state_metrics
+  description: 'Daily regional activity. Grain: one UTC date and region.'
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - transaction_date
+        - state_code
+  columns:
+  - name: transaction_date
+    description: UTC calendar day.
+    data_tests:
+    - not_null
+  - name: state_code
+    description: State or DC code.
+    data_tests:
+    - not_null
+    - &id003
+      relationships:
+        arguments:
+          to: ref('states')
+          field: state_code
+  - &id001
+    name: transaction_count
+    description: Number of transactions in the group.
+    data_tests:
+    - not_null
+  - &id002
+    name: total_amount
+    description: Exact sum of all transaction amounts.
+    data_tests:
+    - not_null
+  - name: average_amount
+    description: Arithmetic mean amount.
+    data_tests:
+    - not_null
+  - name: p95_amount
+    description: Exact ClickHouse 0.95 order-statistic quantile.
+    data_tests:
+    - not_null
+  - name: large_transaction_share
+    description: Fraction from 0 to 1 reaching the large-amount threshold.
+    data_tests:
+    - not_null
+- name: mart_fraud_by_category
+  description: 'Observed category fraud rates and amounts. Grain: one category.'
+  columns:
+  - name: category
+    description: Normalized category.
+    data_tests:
+    - not_null
+    - unique
+  - *id001
+  - &id004
+    name: fraud_count
+    description: Number of observed frauds.
+    data_tests:
+    - not_null
+  - &id005
+    name: fraud_rate
+    description: 'Observed fraud percentage: 100 * fraud_count / transaction_count.'
+    data_tests:
+    - not_null
+  - *id002
+  - &id006
+    name: fraud_amount
+    description: Exact sum of amounts with target=1.
+    data_tests:
+    - not_null
+- name: mart_fraud_by_state
+  description: 'Regional fraud and exact distinct counts. Grain: one state or DC.'
+  columns:
+  - name: state_code
+    description: State or DC code.
+    data_tests:
+    - not_null
+    - unique
+    - *id003
+  - *id001
+  - *id004
+  - *id005
+  - *id002
+  - *id006
+  - name: unique_clients
+    description: Exact count of registry clients in the region.
+    data_tests:
+    - not_null
+  - name: unique_merchants
+    description: Exact count of normalized merchant labels.
+    data_tests:
+    - not_null
+- name: mart_customer_risk_profile
+  description: 'Activity history and rule-based risk for each active client. Grain:
+    one integer client ID.'
+  columns:
+  - name: client_id
+    description: Persistent key from the separate registry.
+    data_tests:
+    - not_null
+    - unique
+    - relationships:
+        arguments:
+          to: ref('stg_clients')
+          field: client_id
+  - name: state_code
+    description: Residence region from the client directory.
+    data_tests:
+    - not_null
+    - *id003
+  - name: first_transaction_at
+    description: Earliest observed transaction timestamp.
+    data_tests:
+    - not_null
+  - name: last_transaction_at
+    description: Latest observed transaction timestamp.
+    data_tests:
+    - not_null
+  - *id001
+  - *id004
+  - *id005
+  - *id002
+  - *id006
+  - name: average_amount
+    description: Arithmetic mean amount per client.
+    data_tests:
+    - not_null
+  - name: risk_level
+    description: HIGH from risk_high_pct; MEDIUM from risk_medium_pct; LOW otherwise.
+    data_tests:
+    - not_null
+    - accepted_values:
+        arguments:
+          values:
+          - HIGH
+          - MEDIUM
+          - LOW

@@ -1,0 +1,74 @@
+20:21:58  Running with dbt=1.10.23
+20:21:58  This version of dbt is deprecated and no longer receives regular patches, including for known bugs. We recommend upgrading to a newer supported version of dbt: https://docs.getdbt.com/docs/dbt-versions
+20:21:59  Registered adapter: clickhouse=1.10.3
+20:22:02  Found 54 models, 147 data tests, 2 seeds, 1 operation, 2 sources, 941 macros
+20:22:02  
+20:22:02  Concurrency: 2 threads (target='dev')
+20:22:02  
+20:22:03  1 of 1 START hook: transaction_analytics.on-run-start.0 ........................ [RUN]
+20:22:03  1 of 1 OK hook: transaction_analytics.on-run-start.0 ........................... [OK in 0.07s]
+20:22:03  
+20:22:03  1 of 29 START test is_empty_fct_chained_views_dependencies_ .................... [RUN]
+20:22:03  2 of 29 START test is_empty_fct_direct_join_to_source_ ......................... [RUN]
+20:22:03  2 of 29 PASS is_empty_fct_direct_join_to_source_ ............................... [PASS in 0.20s]
+20:22:03  1 of 29 PASS is_empty_fct_chained_views_dependencies_ .......................... [PASS in 0.21s]
+20:22:03  3 of 29 START test is_empty_fct_duplicate_sources_ ............................. [RUN]
+20:22:03  4 of 29 START test is_empty_fct_exposure_parents_materializations_ ............. [RUN]
+20:22:03  3 of 29 PASS is_empty_fct_duplicate_sources_ ................................... [PASS in 0.07s]
+20:22:03  5 of 29 START test is_empty_fct_exposures_dependent_on_private_models_ ......... [RUN]
+20:22:03  4 of 29 PASS is_empty_fct_exposure_parents_materializations_ ................... [PASS in 0.08s]
+20:22:03  6 of 29 START test is_empty_fct_hard_coded_references_ ......................... [RUN]
+20:22:03  6 of 29 PASS is_empty_fct_hard_coded_references_ ............................... [PASS in 0.05s]
+20:22:03  5 of 29 PASS is_empty_fct_exposures_dependent_on_private_models_ ............... [PASS in 0.09s]
+20:22:03  7 of 29 START test is_empty_fct_marts_or_intermediate_dependent_on_source_ ..... [RUN]
+20:22:03  8 of 29 START test is_empty_fct_missing_primary_key_tests_ ..................... [RUN]
+20:22:03  7 of 29 PASS is_empty_fct_marts_or_intermediate_dependent_on_source_ ........... [PASS in 0.06s]
+20:22:03  9 of 29 START test is_empty_fct_model_directories_ ............................. [RUN]
+20:22:03  9 of 29 PASS is_empty_fct_model_directories_ ................................... [PASS in 0.09s]
+20:22:03  10 of 29 START test is_empty_fct_model_fanout_ ................................. [RUN]
+20:22:03  10 of 29 PASS is_empty_fct_model_fanout_ ....................................... [PASS in 0.05s]
+20:22:03  11 of 29 START test is_empty_fct_model_naming_conventions_ ..................... [RUN]
+20:22:03  11 of 29 PASS is_empty_fct_model_naming_conventions_ ........................... [PASS in 0.11s]
+20:22:03  8 of 29 PASS is_empty_fct_missing_primary_key_tests_ ........................... [PASS in 0.35s]
+20:22:03  12 of 29 START test is_empty_fct_multiple_sources_joined_ ...................... [RUN]
+20:22:03  13 of 29 START test is_empty_fct_public_models_without_contract_ ............... [RUN]
+20:22:03  12 of 29 PASS is_empty_fct_multiple_sources_joined_ ............................ [PASS in 0.06s]
+20:22:03  14 of 29 START test is_empty_fct_rejoining_of_upstream_concepts_ ............... [RUN]
+20:22:03  13 of 29 PASS is_empty_fct_public_models_without_contract_ ..................... [PASS in 0.07s]
+20:22:03  15 of 29 START test is_empty_fct_root_models_ .................................. [RUN]
+20:22:04  14 of 29 PASS is_empty_fct_rejoining_of_upstream_concepts_ ..................... [PASS in 0.07s]
+20:22:04  15 of 29 PASS is_empty_fct_root_models_ ........................................ [PASS in 0.06s]
+20:22:04  16 of 29 START test is_empty_fct_source_directories_ ........................... [RUN]
+20:22:04  17 of 29 START test is_empty_fct_source_fanout_ ................................ [RUN]
+20:22:04  17 of 29 PASS is_empty_fct_source_fanout_ ...................................... [PASS in 0.05s]
+20:22:04  16 of 29 PASS is_empty_fct_source_directories_ ................................. [PASS in 0.07s]
+20:22:04  18 of 29 START test is_empty_fct_sources_without_freshness_ .................... [RUN]
+20:22:04  19 of 29 START test is_empty_fct_staging_dependent_on_marts_or_intermediate_ ... [RUN]
+20:22:04  19 of 29 PASS is_empty_fct_staging_dependent_on_marts_or_intermediate_ ......... [PASS in 0.05s]
+20:22:04  18 of 29 PASS is_empty_fct_sources_without_freshness_ .......................... [PASS in 0.07s]
+20:22:04  20 of 29 START test is_empty_fct_staging_dependent_on_staging_ ................. [RUN]
+20:22:04  21 of 29 START test is_empty_fct_test_directories_ ............................. [RUN]
+20:22:04  20 of 29 PASS is_empty_fct_staging_dependent_on_staging_ ....................... [PASS in 0.07s]
+20:22:04  22 of 29 START test is_empty_fct_too_many_joins_ ............................... [RUN]
+20:22:04  22 of 29 PASS is_empty_fct_too_many_joins_ ..................................... [PASS in 0.06s]
+20:22:04  23 of 29 START test is_empty_fct_undocumented_models_ .......................... [RUN]
+20:22:04  21 of 29 PASS is_empty_fct_test_directories_ ................................... [PASS in 0.19s]
+20:22:04  24 of 29 START test is_empty_fct_undocumented_public_models_ ................... [RUN]
+20:22:04  23 of 29 PASS is_empty_fct_undocumented_models_ ................................ [PASS in 0.08s]
+20:22:04  25 of 29 START test is_empty_fct_undocumented_source_tables_ ................... [RUN]
+20:22:04  24 of 29 PASS is_empty_fct_undocumented_public_models_ ......................... [PASS in 0.08s]
+20:22:04  26 of 29 START test is_empty_fct_undocumented_sources_ ......................... [RUN]
+20:22:04  25 of 29 PASS is_empty_fct_undocumented_source_tables_ ......................... [PASS in 0.08s]
+20:22:04  27 of 29 START test is_empty_fct_unused_sources_ ............................... [RUN]
+20:22:04  26 of 29 PASS is_empty_fct_undocumented_sources_ ............................... [PASS in 0.06s]
+20:22:04  28 of 29 START test valid_documentation_coverage ............................... [RUN]
+20:22:04  27 of 29 PASS is_empty_fct_unused_sources_ ..................................... [PASS in 0.08s]
+20:22:04  29 of 29 START test valid_test_coverage ........................................ [RUN]
+20:22:04  28 of 29 PASS valid_documentation_coverage ..................................... [PASS in 0.18s]
+20:22:05  29 of 29 PASS valid_test_coverage .............................................. [PASS in 0.44s]
+20:22:05  
+20:22:05  Finished running 1 project hook, 29 data tests in 0 hours 0 minutes and 2.35 seconds (2.35s).
+20:22:05  
+20:22:05  Completed successfully
+20:22:05  
+20:22:05  Done. PASS=30 WARN=0 ERROR=0 SKIP=0 NO-OP=0 TOTAL=30

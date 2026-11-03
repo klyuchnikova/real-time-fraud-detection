@@ -1,0 +1,148 @@
+version: 2
+sources:
+- name: raw
+  schema: '{{ env_var(''RAW_DATABASE'', ''transactions_db'') }}'
+  description: Original labeled transactions and a copy of the durable integer client
+    registry.
+  tables:
+  - name: transactions
+    description: One row per labeled CSV record; repeated import does not append duplicates.
+    columns:
+    - name: transaction_id
+      description: One-based CSV row number within the published source snapshot.
+      data_tests:
+      - not_null
+      - unique
+    - name: client_id
+      description: Persistent integer key allocated in the SQLite registry.
+      data_tests:
+      - not_null
+      - relationships:
+          arguments:
+            to: source('raw', 'clients')
+            field: client_id
+    - name: transaction_time
+      description: Original timestamp interpreted as UTC without regional conversion.
+      data_tests:
+      - not_null
+    - name: merch
+      description: Original merchant label.
+      data_tests:
+      - not_null
+    - name: cat_id
+      description: Original transaction category.
+      data_tests:
+      - not_null
+    - name: amount
+      description: Nonnegative monetary amount stored exactly to two decimal places.
+      data_tests:
+      - not_null
+    - name: name_1
+      description: First name, a component of registry identity.
+      data_tests:
+      - not_null
+    - name: name_2
+      description: Last name, a component of registry identity.
+      data_tests:
+      - not_null
+    - name: gender
+      description: Source gender code.
+      data_tests:
+      - not_null
+      - accepted_values:
+          arguments:
+            values:
+            - M
+            - F
+    - name: street
+      description: Street used in registry identity.
+      data_tests:
+      - not_null
+    - name: one_city
+      description: City used in registry identity.
+      data_tests:
+      - not_null
+    - name: us_state
+      description: US state or DC federal district code.
+      data_tests:
+      - not_null
+    - name: post_code
+      description: Postal code preserving leading zeroes.
+      data_tests:
+      - not_null
+    - name: lat
+      description: Client latitude.
+      data_tests:
+      - not_null
+    - name: lon
+      description: Client longitude.
+      data_tests:
+      - not_null
+    - name: population_city
+      description: Source city population.
+      data_tests:
+      - not_null
+    - name: jobs
+      description: Occupation label.
+      data_tests:
+      - not_null
+    - name: merchant_lat
+      description: Merchant latitude.
+      data_tests:
+      - not_null
+    - name: merchant_lon
+      description: Merchant longitude.
+      data_tests:
+      - not_null
+    - name: target
+      description: 'Observed fraud indicator: 1 for fraud, 0 for legitimate.'
+      data_tests:
+      - not_null
+      - accepted_values:
+          arguments:
+            values:
+            - 0
+            - 1
+  - name: clients
+    description: Analytical copy of the SQLite registry, which enforces integer primary
+      keys and a unique six-field identity tuple.
+    columns:
+    - name: client_id
+      description: Persistent SQLite INTEGER PRIMARY KEY; never derived from a hash.
+      data_tests:
+      - not_null
+      - unique
+    - name: name_1
+      description: First name, a component of registry identity.
+      data_tests:
+      - not_null
+    - name: name_2
+      description: Last name, a component of registry identity.
+      data_tests:
+      - not_null
+    - name: street
+      description: Street used in registry identity.
+      data_tests:
+      - not_null
+    - name: one_city
+      description: City used in registry identity.
+      data_tests:
+      - not_null
+    - name: us_state
+      description: US state or DC federal district code.
+      data_tests:
+      - not_null
+    - name: post_code
+      description: Postal code preserving leading zeroes.
+      data_tests:
+      - not_null
+    data_tests:
+    - dbt_utils.unique_combination_of_columns:
+        arguments:
+          combination_of_columns:
+          - name_1
+          - name_2
+          - street
+          - one_city
+          - us_state
+          - post_code

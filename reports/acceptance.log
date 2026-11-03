@@ -1,0 +1,629 @@
+ Container transaction-analytics-clickhouse-1  Running
+python -m scripts.load_source
+{"status": "unchanged", "rows": 786431, "clients": 965, "sha256": "2fd291f0d66cbb1f3c3e442396f3725d4cbde650d5dd0c16322c5230d3776b99"}
+dbt deps --project-dir dbt --profiles-dir dbt
+[0m20:20:22  Running with dbt=1.10.23
+[0m20:20:22  This version of dbt is deprecated and no longer receives regular patches, including for known bugs. We recommend upgrading to a newer supported version of dbt: https://docs.getdbt.com/docs/dbt-versions
+[0m20:20:26  Installing dbt-labs/dbt_utils
+[0m20:20:38  Installed from version 1.4.1
+[0m20:20:38  Up to date!
+[0m20:20:38  Installing godatadriven/dbt_date
+[0m20:20:41  Installed from version 0.21.0
+[0m20:20:41  Up to date!
+[0m20:20:41  Installing dbt-labs/dbt_project_evaluator
+[0m20:20:58  Installed from version 1.4.1
+[0m20:20:58  Up to date!
+python -m scripts.prepare_packages
+Prepared evaluator CTE aliases
+dbt seed --project-dir dbt --profiles-dir dbt
+[0m20:21:01  Running with dbt=1.10.23
+[0m20:21:01  This version of dbt is deprecated and no longer receives regular patches, including for known bugs. We recommend upgrading to a newer supported version of dbt: https://docs.getdbt.com/docs/dbt-versions
+[0m20:21:02  Registered adapter: clickhouse=1.10.3
+[0m20:21:02  Unable to do partial parsing because a project config has changed
+[0m20:21:16  Found 54 models, 147 data tests, 2 seeds, 1 operation, 2 sources, 941 macros
+[0m20:21:16  
+[0m20:21:16  Concurrency: 2 threads (target='dev')
+[0m20:21:16  
+[0m20:21:17  1 of 1 START hook: transaction_analytics.on-run-start.0 ........................ [RUN]
+[0m20:21:17  1 of 1 OK hook: transaction_analytics.on-run-start.0 ........................... [[32mOK[0m in 0.07s]
+[0m20:21:17  
+[0m20:21:17  1 of 2 START seed file `analytics_reference`.`dbt_project_evaluator_exceptions`  [RUN]
+[0m20:21:17  2 of 2 START seed file `analytics_reference`.`states` .......................... [RUN]
+[0m20:21:17  1 of 2 OK loaded seed file analytics_reference.dbt_project_evaluator_exceptions  [[32mINSERT 2[0m in 0.19s]
+[0m20:21:17  2 of 2 OK loaded seed file analytics_reference.states .......................... [[32mINSERT 51[0m in 0.22s]
+[0m20:21:17  
+[0m20:21:17  Finished running 1 project hook, 2 seeds in 0 hours 0 minutes and 0.68 seconds (0.68s).
+[0m20:21:17  
+[0m20:21:17  [32mCompleted successfully[0m
+[0m20:21:17  
+[0m20:21:17  Done. PASS=3 WARN=0 ERROR=0 SKIP=0 NO-OP=0 TOTAL=3
+dbt run --select package:transaction_analytics --project-dir dbt --profiles-dir dbt
+[0m20:21:20  Running with dbt=1.10.23
+[0m20:21:20  This version of dbt is deprecated and no longer receives regular patches, including for known bugs. We recommend upgrading to a newer supported version of dbt: https://docs.getdbt.com/docs/dbt-versions
+[0m20:21:21  Registered adapter: clickhouse=1.10.3
+[0m20:21:24  Found 54 models, 147 data tests, 2 seeds, 1 operation, 2 sources, 941 macros
+[0m20:21:24  
+[0m20:21:24  Concurrency: 2 threads (target='dev')
+[0m20:21:24  
+[0m20:21:25  1 of 1 START hook: transaction_analytics.on-run-start.0 ........................ [RUN]
+[0m20:21:25  1 of 1 OK hook: transaction_analytics.on-run-start.0 ........................... [[32mOK[0m in 0.07s]
+[0m20:21:25  
+[0m20:21:25  1 of 6 START sql view model `analytics_staging`.`stg_clients` .................. [RUN]
+[0m20:21:25  2 of 6 START sql view model `analytics_staging`.`stg_transactions` ............. [RUN]
+[0m20:21:25  2 of 6 OK created sql view model `analytics_staging`.`stg_transactions` ........ [[32mOK[0m in 0.34s]
+[0m20:21:25  1 of 6 OK created sql view model `analytics_staging`.`stg_clients` ............. [[32mOK[0m in 0.35s]
+[0m20:21:25  3 of 6 START sql table model `analytics_marts`.`mart_daily_state_metrics` ...... [RUN]
+[0m20:21:25  4 of 6 START sql table model `analytics_marts`.`mart_fraud_by_category` ........ [RUN]
+[0m20:21:26  4 of 6 OK created sql table model `analytics_marts`.`mart_fraud_by_category` ... [[32mOK[0m in 0.62s]
+[0m20:21:26  5 of 6 START sql table model `analytics_marts`.`mart_fraud_by_state` ........... [RUN]
+[0m20:21:26  3 of 6 OK created sql table model `analytics_marts`.`mart_daily_state_metrics` . [[32mOK[0m in 0.76s]
+[0m20:21:26  6 of 6 START sql table model `analytics_marts`.`mart_customer_risk_profile` .... [RUN]
+[0m20:21:26  5 of 6 OK created sql table model `analytics_marts`.`mart_fraud_by_state` ...... [[32mOK[0m in 0.35s]
+[0m20:21:26  6 of 6 OK created sql table model `analytics_marts`.`mart_customer_risk_profile`  [[32mOK[0m in 0.24s]
+[0m20:21:26  
+[0m20:21:26  Finished running 1 project hook, 4 table models, 2 view models in 0 hours 0 minutes and 1.85 seconds (1.85s).
+[0m20:21:26  
+[0m20:21:26  [32mCompleted successfully[0m
+[0m20:21:26  
+[0m20:21:26  Done. PASS=7 WARN=0 ERROR=0 SKIP=0 NO-OP=0 TOTAL=7
+python -m scripts.run_dbt test --select package:transaction_analytics --log reports/dbt_test.log
+20:21:29  Running with dbt=1.10.23
+20:21:30  This version of dbt is deprecated and no longer receives regular patches, including for known bugs. We recommend upgrading to a newer supported version of dbt: https://docs.getdbt.com/docs/dbt-versions
+20:21:30  Registered adapter: clickhouse=1.10.3
+20:21:33  Found 54 models, 147 data tests, 2 seeds, 1 operation, 2 sources, 941 macros
+20:21:33  
+20:21:33  Concurrency: 2 threads (target='dev')
+20:21:33  
+20:21:34  1 of 1 START hook: transaction_analytics.on-run-start.0 ........................ [RUN]
+20:21:34  1 of 1 OK hook: transaction_analytics.on-run-start.0 ........................... [OK in 0.07s]
+20:21:34  
+20:21:34  1 of 118 START test accepted_values_mart_customer_risk_profile_risk_level__HIGH__MEDIUM__LOW  [RUN]
+20:21:34  2 of 118 START test accepted_values_states_region_type__STATE__FEDERAL_DISTRICT  [RUN]
+20:21:34  2 of 118 PASS accepted_values_states_region_type__STATE__FEDERAL_DISTRICT ...... [PASS in 0.19s]
+20:21:34  1 of 118 PASS accepted_values_mart_customer_risk_profile_risk_level__HIGH__MEDIUM__LOW  [PASS in 0.20s]
+20:21:34  3 of 118 START test accepted_values_stg_transactions_amount_bucket__SMALL__MEDIUM__LARGE__VERY_LARGE  [RUN]
+20:21:34  4 of 118 START test accepted_values_stg_transactions_day_of_week__1__2__3__4__5__6__7  [RUN]
+20:21:34  4 of 118 PASS accepted_values_stg_transactions_day_of_week__1__2__3__4__5__6__7  [PASS in 0.09s]
+20:21:34  3 of 118 PASS accepted_values_stg_transactions_amount_bucket__SMALL__MEDIUM__LARGE__VERY_LARGE  [PASS in 0.10s]
+20:21:34  5 of 118 START test accepted_values_stg_transactions_gender__M__F .............. [RUN]
+20:21:34  6 of 118 START test accepted_values_stg_transactions_is_large_transaction__0__1  [RUN]
+20:21:34  5 of 118 PASS accepted_values_stg_transactions_gender__M__F .................... [PASS in 0.07s]
+20:21:34  6 of 118 PASS accepted_values_stg_transactions_is_large_transaction__0__1 ...... [PASS in 0.08s]
+20:21:34  7 of 118 START test accepted_values_stg_transactions_target__0__1 .............. [RUN]
+20:21:34  8 of 118 START test assert_aggregate_reconciliation ............................ [RUN]
+20:21:34  7 of 118 PASS accepted_values_stg_transactions_target__0__1 .................... [PASS in 0.12s]
+20:21:34  9 of 118 START test assert_calendar_and_shares ................................. [RUN]
+20:21:34  8 of 118 PASS assert_aggregate_reconciliation .................................. [PASS in 0.17s]
+20:21:35  10 of 118 START test assert_client_registry_integrity .......................... [RUN]
+20:21:35  9 of 118 PASS assert_calendar_and_shares ....................................... [PASS in 0.08s]
+20:21:35  11 of 118 START test assert_fraud_rate_bounds .................................. [RUN]
+20:21:35  11 of 118 PASS assert_fraud_rate_bounds ........................................ [PASS in 0.11s]
+20:21:35  10 of 118 PASS assert_client_registry_integrity ................................ [PASS in 0.14s]
+20:21:35  12 of 118 START test assert_fraud_reconciliation ............................... [RUN]
+20:21:35  13 of 118 START test assert_macro_boundaries ................................... [RUN]
+20:21:35  13 of 118 PASS assert_macro_boundaries ......................................... [PASS in 0.07s]
+20:21:35  14 of 118 START test assert_no_negative_amounts ................................ [RUN]
+20:21:35  14 of 118 PASS assert_no_negative_amounts ...................................... [PASS in 0.05s]
+20:21:35  15 of 118 START test assert_risk_boundaries .................................... [RUN]
+20:21:35  12 of 118 PASS assert_fraud_reconciliation ..................................... [PASS in 0.19s]
+20:21:35  16 of 118 START test dbt_utils_source_unique_combination_of_columns_raw_clients_name_1__name_2__street__one_city__us_state__post_code  [RUN]
+20:21:35  15 of 118 PASS assert_risk_boundaries .......................................... [PASS in 0.07s]
+20:21:35  17 of 118 START test dbt_utils_unique_combination_of_columns_mart_daily_state_metrics_transaction_date__state_code  [RUN]
+20:21:35  16 of 118 PASS dbt_utils_source_unique_combination_of_columns_raw_clients_name_1__name_2__street__one_city__us_state__post_code  [PASS in 0.09s]
+20:21:35  18 of 118 START test dbt_utils_unique_combination_of_columns_stg_clients_first_name__last_name__street__city__state_code__post_code  [RUN]
+20:21:35  17 of 118 PASS dbt_utils_unique_combination_of_columns_mart_daily_state_metrics_transaction_date__state_code  [PASS in 0.07s]
+20:21:35  19 of 118 START test not_null_mart_customer_risk_profile_average_amount ........ [RUN]
+20:21:35  18 of 118 PASS dbt_utils_unique_combination_of_columns_stg_clients_first_name__last_name__street__city__state_code__post_code  [PASS in 0.13s]
+20:21:35  20 of 118 START test not_null_mart_customer_risk_profile_client_id ............. [RUN]
+20:21:35  19 of 118 PASS not_null_mart_customer_risk_profile_average_amount .............. [PASS in 0.15s]
+20:21:35  21 of 118 START test not_null_mart_customer_risk_profile_first_transaction_at .. [RUN]
+20:21:35  20 of 118 PASS not_null_mart_customer_risk_profile_client_id ................... [PASS in 0.11s]
+20:21:35  22 of 118 START test not_null_mart_customer_risk_profile_fraud_amount .......... [RUN]
+20:21:35  21 of 118 PASS not_null_mart_customer_risk_profile_first_transaction_at ........ [PASS in 0.13s]
+20:21:35  23 of 118 START test not_null_mart_customer_risk_profile_fraud_count ........... [RUN]
+20:21:35  22 of 118 PASS not_null_mart_customer_risk_profile_fraud_amount ................ [PASS in 0.11s]
+20:21:35  24 of 118 START test not_null_mart_customer_risk_profile_fraud_rate ............ [RUN]
+20:21:35  23 of 118 PASS not_null_mart_customer_risk_profile_fraud_count ................. [PASS in 0.08s]
+20:21:35  24 of 118 PASS not_null_mart_customer_risk_profile_fraud_rate .................. [PASS in 0.06s]
+20:21:35  25 of 118 START test not_null_mart_customer_risk_profile_last_transaction_at ... [RUN]
+20:21:35  26 of 118 START test not_null_mart_customer_risk_profile_risk_level ............ [RUN]
+20:21:35  26 of 118 PASS not_null_mart_customer_risk_profile_risk_level .................. [PASS in 0.06s]
+20:21:35  25 of 118 PASS not_null_mart_customer_risk_profile_last_transaction_at ......... [PASS in 0.07s]
+20:21:36  27 of 118 START test not_null_mart_customer_risk_profile_state_code ............ [RUN]
+20:21:36  28 of 118 START test not_null_mart_customer_risk_profile_total_amount .......... [RUN]
+20:21:36  27 of 118 PASS not_null_mart_customer_risk_profile_state_code .................. [PASS in 0.06s]
+20:21:36  28 of 118 PASS not_null_mart_customer_risk_profile_total_amount ................ [PASS in 0.06s]
+20:21:36  29 of 118 START test not_null_mart_customer_risk_profile_transaction_count ..... [RUN]
+20:21:36  30 of 118 START test not_null_mart_daily_state_metrics_average_amount .......... [RUN]
+20:21:36  29 of 118 PASS not_null_mart_customer_risk_profile_transaction_count ........... [PASS in 0.06s]
+20:21:36  30 of 118 PASS not_null_mart_daily_state_metrics_average_amount ................ [PASS in 0.06s]
+20:21:36  31 of 118 START test not_null_mart_daily_state_metrics_large_transaction_share . [RUN]
+20:21:36  32 of 118 START test not_null_mart_daily_state_metrics_p95_amount .............. [RUN]
+20:21:36  31 of 118 PASS not_null_mart_daily_state_metrics_large_transaction_share ....... [PASS in 0.06s]
+20:21:36  33 of 118 START test not_null_mart_daily_state_metrics_state_code .............. [RUN]
+20:21:36  32 of 118 PASS not_null_mart_daily_state_metrics_p95_amount .................... [PASS in 0.09s]
+20:21:36  34 of 118 START test not_null_mart_daily_state_metrics_total_amount ............ [RUN]
+20:21:36  33 of 118 PASS not_null_mart_daily_state_metrics_state_code .................... [PASS in 0.10s]
+20:21:36  34 of 118 PASS not_null_mart_daily_state_metrics_total_amount .................. [PASS in 0.05s]
+20:21:36  35 of 118 START test not_null_mart_daily_state_metrics_transaction_count ....... [RUN]
+20:21:36  36 of 118 START test not_null_mart_daily_state_metrics_transaction_date ........ [RUN]
+20:21:36  36 of 118 PASS not_null_mart_daily_state_metrics_transaction_date .............. [PASS in 0.06s]
+20:21:36  35 of 118 PASS not_null_mart_daily_state_metrics_transaction_count ............. [PASS in 0.06s]
+20:21:36  37 of 118 START test not_null_mart_fraud_by_category_category .................. [RUN]
+20:21:36  38 of 118 START test not_null_mart_fraud_by_category_fraud_amount .............. [RUN]
+20:21:36  38 of 118 PASS not_null_mart_fraud_by_category_fraud_amount .................... [PASS in 0.06s]
+20:21:36  37 of 118 PASS not_null_mart_fraud_by_category_category ........................ [PASS in 0.06s]
+20:21:36  39 of 118 START test not_null_mart_fraud_by_category_fraud_count ............... [RUN]
+20:21:36  40 of 118 START test not_null_mart_fraud_by_category_fraud_rate ................ [RUN]
+20:21:36  39 of 118 PASS not_null_mart_fraud_by_category_fraud_count ..................... [PASS in 0.06s]
+20:21:36  40 of 118 PASS not_null_mart_fraud_by_category_fraud_rate ...................... [PASS in 0.06s]
+20:21:36  41 of 118 START test not_null_mart_fraud_by_category_total_amount .............. [RUN]
+20:21:36  42 of 118 START test not_null_mart_fraud_by_category_transaction_count ......... [RUN]
+20:21:36  41 of 118 PASS not_null_mart_fraud_by_category_total_amount .................... [PASS in 0.06s]
+20:21:36  42 of 118 PASS not_null_mart_fraud_by_category_transaction_count ............... [PASS in 0.06s]
+20:21:36  43 of 118 START test not_null_mart_fraud_by_state_fraud_amount ................. [RUN]
+20:21:36  44 of 118 START test not_null_mart_fraud_by_state_fraud_count .................. [RUN]
+20:21:36  44 of 118 PASS not_null_mart_fraud_by_state_fraud_count ........................ [PASS in 0.07s]
+20:21:36  43 of 118 PASS not_null_mart_fraud_by_state_fraud_amount ....................... [PASS in 0.07s]
+20:21:36  45 of 118 START test not_null_mart_fraud_by_state_fraud_rate ................... [RUN]
+20:21:36  46 of 118 START test not_null_mart_fraud_by_state_state_code ................... [RUN]
+20:21:36  46 of 118 PASS not_null_mart_fraud_by_state_state_code ......................... [PASS in 0.06s]
+20:21:36  45 of 118 PASS not_null_mart_fraud_by_state_fraud_rate ......................... [PASS in 0.06s]
+20:21:36  47 of 118 START test not_null_mart_fraud_by_state_total_amount ................. [RUN]
+20:21:36  48 of 118 START test not_null_mart_fraud_by_state_transaction_count ............ [RUN]
+20:21:36  47 of 118 PASS not_null_mart_fraud_by_state_total_amount ....................... [PASS in 0.06s]
+20:21:36  48 of 118 PASS not_null_mart_fraud_by_state_transaction_count .................. [PASS in 0.06s]
+20:21:36  49 of 118 START test not_null_mart_fraud_by_state_unique_clients ............... [RUN]
+20:21:36  50 of 118 START test not_null_mart_fraud_by_state_unique_merchants ............. [RUN]
+20:21:36  50 of 118 PASS not_null_mart_fraud_by_state_unique_merchants ................... [PASS in 0.08s]
+20:21:36  49 of 118 PASS not_null_mart_fraud_by_state_unique_clients ..................... [PASS in 0.09s]
+20:21:36  51 of 118 START test not_null_states_region_type ............................... [RUN]
+20:21:36  52 of 118 START test not_null_states_state_code ................................ [RUN]
+20:21:37  52 of 118 PASS not_null_states_state_code ...................................... [PASS in 0.06s]
+20:21:37  51 of 118 PASS not_null_states_region_type ..................................... [PASS in 0.07s]
+20:21:37  53 of 118 START test not_null_states_state_name ................................ [RUN]
+20:21:37  54 of 118 START test not_null_stg_clients_city ................................. [RUN]
+20:21:37  53 of 118 PASS not_null_states_state_name ...................................... [PASS in 0.07s]
+20:21:37  55 of 118 START test not_null_stg_clients_client_id ............................ [RUN]
+20:21:37  54 of 118 PASS not_null_stg_clients_city ....................................... [PASS in 0.07s]
+20:21:37  56 of 118 START test not_null_stg_clients_first_name ........................... [RUN]
+20:21:37  55 of 118 PASS not_null_stg_clients_client_id .................................. [PASS in 0.08s]
+20:21:37  57 of 118 START test not_null_stg_clients_last_name ............................ [RUN]
+20:21:37  56 of 118 PASS not_null_stg_clients_first_name ................................. [PASS in 0.09s]
+20:21:37  58 of 118 START test not_null_stg_clients_post_code ............................ [RUN]
+20:21:37  57 of 118 PASS not_null_stg_clients_last_name .................................. [PASS in 0.07s]
+20:21:37  59 of 118 START test not_null_stg_clients_state_code ........................... [RUN]
+20:21:37  58 of 118 PASS not_null_stg_clients_post_code .................................. [PASS in 0.08s]
+20:21:37  60 of 118 START test not_null_stg_clients_street ............................... [RUN]
+20:21:37  59 of 118 PASS not_null_stg_clients_state_code ................................. [PASS in 0.08s]
+20:21:37  61 of 118 START test not_null_stg_transactions_amount .......................... [RUN]
+20:21:37  60 of 118 PASS not_null_stg_clients_street ..................................... [PASS in 0.06s]
+20:21:37  62 of 118 START test not_null_stg_transactions_amount_bucket ................... [RUN]
+20:21:37  61 of 118 PASS not_null_stg_transactions_amount ................................ [PASS in 0.07s]
+20:21:37  63 of 118 START test not_null_stg_transactions_category ........................ [RUN]
+20:21:37  62 of 118 PASS not_null_stg_transactions_amount_bucket ......................... [PASS in 0.08s]
+20:21:37  64 of 118 START test not_null_stg_transactions_client_id ....................... [RUN]
+20:21:37  63 of 118 PASS not_null_stg_transactions_category .............................. [PASS in 0.08s]
+20:21:37  65 of 118 START test not_null_stg_transactions_day_of_week ..................... [RUN]
+20:21:37  64 of 118 PASS not_null_stg_transactions_client_id ............................. [PASS in 0.08s]
+20:21:37  66 of 118 START test not_null_stg_transactions_gender .......................... [RUN]
+20:21:37  65 of 118 PASS not_null_stg_transactions_day_of_week ........................... [PASS in 0.08s]
+20:21:37  67 of 118 START test not_null_stg_transactions_is_large_transaction ............ [RUN]
+20:21:37  66 of 118 PASS not_null_stg_transactions_gender ................................ [PASS in 0.11s]
+20:21:37  68 of 118 START test not_null_stg_transactions_merchant ........................ [RUN]
+20:21:37  67 of 118 PASS not_null_stg_transactions_is_large_transaction .................. [PASS in 0.08s]
+20:21:37  69 of 118 START test not_null_stg_transactions_state_code ...................... [RUN]
+20:21:37  68 of 118 PASS not_null_stg_transactions_merchant .............................. [PASS in 0.08s]
+20:21:37  70 of 118 START test not_null_stg_transactions_target .......................... [RUN]
+20:21:37  69 of 118 PASS not_null_stg_transactions_state_code ............................ [PASS in 0.09s]
+20:21:37  71 of 118 START test not_null_stg_transactions_transaction_date ................ [RUN]
+20:21:37  70 of 118 PASS not_null_stg_transactions_target ................................ [PASS in 0.09s]
+20:21:37  72 of 118 START test not_null_stg_transactions_transaction_id .................. [RUN]
+20:21:37  71 of 118 PASS not_null_stg_transactions_transaction_date ...................... [PASS in 0.09s]
+20:21:37  73 of 118 START test not_null_stg_transactions_transaction_time ................ [RUN]
+20:21:38  72 of 118 PASS not_null_stg_transactions_transaction_id ........................ [PASS in 0.08s]
+20:21:38  74 of 118 START test relationships_mart_customer_risk_profile_client_id__client_id__ref_stg_clients_  [RUN]
+20:21:38  73 of 118 PASS not_null_stg_transactions_transaction_time ...................... [PASS in 0.09s]
+20:21:38  75 of 118 START test relationships_mart_customer_risk_profile_state_code__state_code__ref_states_  [RUN]
+20:21:38  74 of 118 PASS relationships_mart_customer_risk_profile_client_id__client_id__ref_stg_clients_  [PASS in 0.10s]
+20:21:38  76 of 118 START test relationships_mart_daily_state_metrics_state_code__state_code__ref_states_  [RUN]
+20:21:38  75 of 118 PASS relationships_mart_customer_risk_profile_state_code__state_code__ref_states_  [PASS in 0.08s]
+20:21:38  77 of 118 START test relationships_mart_fraud_by_state_state_code__state_code__ref_states_  [RUN]
+20:21:38  76 of 118 PASS relationships_mart_daily_state_metrics_state_code__state_code__ref_states_  [PASS in 0.10s]
+20:21:38  78 of 118 START test relationships_stg_clients_state_code__state_code__ref_states_  [RUN]
+20:21:38  77 of 118 PASS relationships_mart_fraud_by_state_state_code__state_code__ref_states_  [PASS in 0.13s]
+20:21:38  79 of 118 START test relationships_stg_transactions_client_id__client_id__ref_stg_clients_  [RUN]
+20:21:38  78 of 118 PASS relationships_stg_clients_state_code__state_code__ref_states_ ... [PASS in 0.16s]
+20:21:38  80 of 118 START test relationships_stg_transactions_state_code__state_code__ref_states_  [RUN]
+20:21:38  79 of 118 PASS relationships_stg_transactions_client_id__client_id__ref_stg_clients_  [PASS in 0.21s]
+20:21:38  81 of 118 START test source_accepted_values_raw_transactions_gender__M__F ...... [RUN]
+20:21:38  81 of 118 PASS source_accepted_values_raw_transactions_gender__M__F ............ [PASS in 0.06s]
+20:21:38  82 of 118 START test source_accepted_values_raw_transactions_target__0__1 ...... [RUN]
+20:21:38  82 of 118 PASS source_accepted_values_raw_transactions_target__0__1 ............ [PASS in 0.06s]
+20:21:38  83 of 118 START test source_not_null_raw_clients_client_id ..................... [RUN]
+20:21:38  80 of 118 PASS relationships_stg_transactions_state_code__state_code__ref_states_  [PASS in 0.23s]
+20:21:38  84 of 118 START test source_not_null_raw_clients_name_1 ........................ [RUN]
+20:21:38  83 of 118 PASS source_not_null_raw_clients_client_id ........................... [PASS in 0.16s]
+20:21:38  84 of 118 PASS source_not_null_raw_clients_name_1 .............................. [PASS in 0.06s]
+20:21:38  85 of 118 START test source_not_null_raw_clients_name_2 ........................ [RUN]
+20:21:38  86 of 118 START test source_not_null_raw_clients_one_city ...................... [RUN]
+20:21:38  85 of 118 PASS source_not_null_raw_clients_name_2 .............................. [PASS in 0.07s]
+20:21:38  86 of 118 PASS source_not_null_raw_clients_one_city ............................ [PASS in 0.06s]
+20:21:38  87 of 118 START test source_not_null_raw_clients_post_code ..................... [RUN]
+20:21:38  88 of 118 START test source_not_null_raw_clients_street ........................ [RUN]
+20:21:39  87 of 118 PASS source_not_null_raw_clients_post_code ........................... [PASS in 0.07s]
+20:21:39  88 of 118 PASS source_not_null_raw_clients_street .............................. [PASS in 0.06s]
+20:21:39  89 of 118 START test source_not_null_raw_clients_us_state ...................... [RUN]
+20:21:39  90 of 118 START test source_not_null_raw_transactions_amount ................... [RUN]
+20:21:39  89 of 118 PASS source_not_null_raw_clients_us_state ............................ [PASS in 0.07s]
+20:21:39  90 of 118 PASS source_not_null_raw_transactions_amount ......................... [PASS in 0.08s]
+20:21:39  91 of 118 START test source_not_null_raw_transactions_cat_id ................... [RUN]
+20:21:39  92 of 118 START test source_not_null_raw_transactions_client_id ................ [RUN]
+20:21:39  91 of 118 PASS source_not_null_raw_transactions_cat_id ......................... [PASS in 0.07s]
+20:21:39  92 of 118 PASS source_not_null_raw_transactions_client_id ...................... [PASS in 0.08s]
+20:21:39  93 of 118 START test source_not_null_raw_transactions_gender ................... [RUN]
+20:21:39  94 of 118 START test source_not_null_raw_transactions_jobs ..................... [RUN]
+20:21:39  93 of 118 PASS source_not_null_raw_transactions_gender ......................... [PASS in 0.08s]
+20:21:39  95 of 118 START test source_not_null_raw_transactions_lat ...................... [RUN]
+20:21:39  94 of 118 PASS source_not_null_raw_transactions_jobs ........................... [PASS in 0.07s]
+20:21:39  96 of 118 START test source_not_null_raw_transactions_lon ...................... [RUN]
+20:21:39  95 of 118 PASS source_not_null_raw_transactions_lat ............................ [PASS in 0.07s]
+20:21:39  97 of 118 START test source_not_null_raw_transactions_merch .................... [RUN]
+20:21:39  96 of 118 PASS source_not_null_raw_transactions_lon ............................ [PASS in 0.07s]
+20:21:39  98 of 118 START test source_not_null_raw_transactions_merchant_lat ............. [RUN]
+20:21:39  97 of 118 PASS source_not_null_raw_transactions_merch .......................... [PASS in 0.08s]
+20:21:39  98 of 118 PASS source_not_null_raw_transactions_merchant_lat ................... [PASS in 0.06s]
+20:21:39  99 of 118 START test source_not_null_raw_transactions_merchant_lon ............. [RUN]
+20:21:39  100 of 118 START test source_not_null_raw_transactions_name_1 .................. [RUN]
+20:21:39  100 of 118 PASS source_not_null_raw_transactions_name_1 ........................ [PASS in 0.06s]
+20:21:39  99 of 118 PASS source_not_null_raw_transactions_merchant_lon ................... [PASS in 0.08s]
+20:21:39  101 of 118 START test source_not_null_raw_transactions_name_2 .................. [RUN]
+20:21:39  102 of 118 START test source_not_null_raw_transactions_one_city ................ [RUN]
+20:21:39  101 of 118 PASS source_not_null_raw_transactions_name_2 ........................ [PASS in 0.06s]
+20:21:39  102 of 118 PASS source_not_null_raw_transactions_one_city ...................... [PASS in 0.06s]
+20:21:39  103 of 118 START test source_not_null_raw_transactions_population_city ......... [RUN]
+20:21:39  104 of 118 START test source_not_null_raw_transactions_post_code ............... [RUN]
+20:21:39  103 of 118 PASS source_not_null_raw_transactions_population_city ............... [PASS in 0.07s]
+20:21:39  104 of 118 PASS source_not_null_raw_transactions_post_code ..................... [PASS in 0.08s]
+20:21:39  105 of 118 START test source_not_null_raw_transactions_street .................. [RUN]
+20:21:39  106 of 118 START test source_not_null_raw_transactions_target .................. [RUN]
+20:21:39  105 of 118 PASS source_not_null_raw_transactions_street ........................ [PASS in 0.07s]
+20:21:39  107 of 118 START test source_not_null_raw_transactions_transaction_id .......... [RUN]
+20:21:39  106 of 118 PASS source_not_null_raw_transactions_target ........................ [PASS in 0.06s]
+20:21:39  108 of 118 START test source_not_null_raw_transactions_transaction_time ........ [RUN]
+20:21:39  107 of 118 PASS source_not_null_raw_transactions_transaction_id ................ [PASS in 0.07s]
+20:21:39  108 of 118 PASS source_not_null_raw_transactions_transaction_time .............. [PASS in 0.05s]
+20:21:39  109 of 118 START test source_not_null_raw_transactions_us_state ................ [RUN]
+20:21:39  110 of 118 START test source_relationships_raw_transactions_client_id__client_id__source_raw_clients_  [RUN]
+20:21:39  109 of 118 PASS source_not_null_raw_transactions_us_state ...................... [PASS in 0.06s]
+20:21:40  111 of 118 START test source_unique_raw_clients_client_id ...................... [RUN]
+20:21:40  110 of 118 PASS source_relationships_raw_transactions_client_id__client_id__source_raw_clients_  [PASS in 0.12s]
+20:21:40  111 of 118 PASS source_unique_raw_clients_client_id ............................ [PASS in 0.07s]
+20:21:40  112 of 118 START test source_unique_raw_transactions_transaction_id ............ [RUN]
+20:21:40  113 of 118 START test unique_mart_customer_risk_profile_client_id .............. [RUN]
+20:21:40  113 of 118 PASS unique_mart_customer_risk_profile_client_id .................... [PASS in 0.06s]
+20:21:40  114 of 118 START test unique_mart_fraud_by_category_category ................... [RUN]
+20:21:40  114 of 118 PASS unique_mart_fraud_by_category_category ......................... [PASS in 0.05s]
+20:21:40  115 of 118 START test unique_mart_fraud_by_state_state_code .................... [RUN]
+20:21:40  112 of 118 PASS source_unique_raw_transactions_transaction_id .................. [PASS in 0.19s]
+20:21:40  115 of 118 PASS unique_mart_fraud_by_state_state_code .......................... [PASS in 0.06s]
+20:21:40  116 of 118 START test unique_states_state_code ................................. [RUN]
+20:21:40  117 of 118 START test unique_stg_clients_client_id ............................. [RUN]
+20:21:40  116 of 118 PASS unique_states_state_code ....................................... [PASS in 0.07s]
+20:21:40  118 of 118 START test unique_stg_transactions_transaction_id ................... [RUN]
+20:21:40  117 of 118 PASS unique_stg_clients_client_id ................................... [PASS in 0.09s]
+20:21:40  118 of 118 PASS unique_stg_transactions_transaction_id ......................... [PASS in 0.15s]
+20:21:40  
+20:21:40  Finished running 1 project hook, 118 data tests in 0 hours 0 minutes and 6.55 seconds (6.55s).
+20:21:40  
+20:21:40  Completed successfully
+20:21:40  
+20:21:40  Done. PASS=119 WARN=0 ERROR=0 SKIP=0 NO-OP=0 TOTAL=119
+dbt run --select package:dbt_project_evaluator --project-dir dbt --profiles-dir dbt
+[0m20:21:43  Running with dbt=1.10.23
+[0m20:21:43  This version of dbt is deprecated and no longer receives regular patches, including for known bugs. We recommend upgrading to a newer supported version of dbt: https://docs.getdbt.com/docs/dbt-versions
+[0m20:21:44  Registered adapter: clickhouse=1.10.3
+[0m20:21:47  Found 54 models, 147 data tests, 2 seeds, 1 operation, 2 sources, 941 macros
+[0m20:21:47  
+[0m20:21:47  Concurrency: 2 threads (target='dev')
+[0m20:21:47  
+[0m20:21:47  1 of 1 START hook: transaction_analytics.on-run-start.0 ........................ [RUN]
+[0m20:21:47  1 of 1 OK hook: transaction_analytics.on-run-start.0 ........................... [[32mOK[0m in 0.07s]
+[0m20:21:47  
+[0m20:21:47  1 of 48 START sql table model `analytics_evaluation`.`base_exposure_relationships`  [RUN]
+[0m20:21:47  2 of 48 START sql table model `analytics_evaluation`.`base_metric_relationships`  [RUN]
+[0m20:21:48  1 of 48 OK created sql table model `analytics_evaluation`.`base_exposure_relationships`  [[32mOK[0m in 0.65s]
+[0m20:21:48  2 of 48 OK created sql table model `analytics_evaluation`.`base_metric_relationships`  [[32mOK[0m in 0.65s]
+[0m20:21:48  3 of 48 START sql table model `analytics_evaluation`.`base_node_columns` ....... [RUN]
+[0m20:21:48  4 of 48 START sql table model `analytics_evaluation`.`base_node_relationships` . [RUN]
+[0m20:21:49  3 of 48 OK created sql table model `analytics_evaluation`.`base_node_columns` .. [[32mOK[0m in 0.48s]
+[0m20:21:49  5 of 48 START sql table model `analytics_evaluation`.`base_source_columns` ..... [RUN]
+[0m20:21:49  4 of 48 OK created sql table model `analytics_evaluation`.`base_node_relationships`  [[32mOK[0m in 0.52s]
+[0m20:21:49  6 of 48 START sql table model `analytics_evaluation`.`stg_exposures` ........... [RUN]
+[0m20:21:49  5 of 48 OK created sql table model `analytics_evaluation`.`base_source_columns`  [[32mOK[0m in 0.24s]
+[0m20:21:49  7 of 48 START sql table model `analytics_evaluation`.`stg_metrics` ............. [RUN]
+[0m20:21:49  6 of 48 OK created sql table model `analytics_evaluation`.`stg_exposures` ...... [[32mOK[0m in 0.22s]
+[0m20:21:49  8 of 48 START sql view model `analytics_evaluation`.`stg_naming_convention_folders`  [RUN]
+[0m20:21:49  8 of 48 OK created sql view model `analytics_evaluation`.`stg_naming_convention_folders`  [[32mOK[0m in 0.16s]
+[0m20:21:49  9 of 48 START sql view model `analytics_evaluation`.`stg_naming_convention_prefixes`  [RUN]
+[0m20:21:49  7 of 48 OK created sql table model `analytics_evaluation`.`stg_metrics` ........ [[32mOK[0m in 0.24s]
+[0m20:21:49  10 of 48 START sql table model `analytics_evaluation`.`stg_nodes` .............. [RUN]
+[0m20:21:49  9 of 48 OK created sql view model `analytics_evaluation`.`stg_naming_convention_prefixes`  [[32mOK[0m in 0.14s]
+[0m20:21:49  11 of 48 START sql table model `analytics_evaluation`.`stg_sources` ............ [RUN]
+[0m20:21:50  11 of 48 OK created sql table model `analytics_evaluation`.`stg_sources` ....... [[32mOK[0m in 0.56s]
+[0m20:21:50  12 of 48 START sql view model `analytics_evaluation`.`stg_exposure_relationships`  [RUN]
+[0m20:21:50  12 of 48 OK created sql view model `analytics_evaluation`.`stg_exposure_relationships`  [[32mOK[0m in 0.36s]
+[0m20:21:50  13 of 48 START sql view model `analytics_evaluation`.`stg_metric_relationships`  [RUN]
+[0m20:21:51  13 of 48 OK created sql view model `analytics_evaluation`.`stg_metric_relationships`  [[32mOK[0m in 0.39s]
+[0m20:21:51  14 of 48 START sql table model `analytics_evaluation`.`stg_node_relationships` . [RUN]
+[0m20:21:51  10 of 48 OK created sql table model `analytics_evaluation`.`stg_nodes` ......... [[32mOK[0m in 1.68s]
+[0m20:21:51  15 of 48 START sql view model `analytics_evaluation`.`stg_columns` ............. [RUN]
+[0m20:21:51  14 of 48 OK created sql table model `analytics_evaluation`.`stg_node_relationships`  [[32mOK[0m in 0.21s]
+[0m20:21:51  16 of 48 START sql table model `analytics_evaluation`.`int_all_graph_resources`  [RUN]
+[0m20:21:51  15 of 48 OK created sql view model `analytics_evaluation`.`stg_columns` ........ [[32mOK[0m in 0.22s]
+[0m20:21:52  16 of 48 OK created sql table model `analytics_evaluation`.`int_all_graph_resources`  [[32mOK[0m in 0.50s]
+[0m20:21:52  17 of 48 START sql view model `analytics_evaluation`.`fct_documentation_coverage`  [RUN]
+[0m20:21:52  18 of 48 START sql table model `analytics_evaluation`.`fct_duplicate_sources` .. [RUN]
+[0m20:21:52  17 of 48 OK created sql view model `analytics_evaluation`.`fct_documentation_coverage`  [[32mOK[0m in 0.14s]
+[0m20:21:52  19 of 48 START sql table model `analytics_evaluation`.`fct_hard_coded_references`  [RUN]
+[0m20:21:52  18 of 48 OK created sql table model `analytics_evaluation`.`fct_duplicate_sources`  [[32mOK[0m in 0.23s]
+[0m20:21:52  20 of 48 START sql view model `analytics_evaluation`.`fct_model_naming_conventions`  [RUN]
+[0m20:21:52  19 of 48 OK created sql table model `analytics_evaluation`.`fct_hard_coded_references`  [[32mOK[0m in 0.20s]
+[0m20:21:52  21 of 48 START sql view model `analytics_evaluation`.`fct_public_models_without_contract`  [RUN]
+[0m20:21:52  20 of 48 OK created sql view model `analytics_evaluation`.`fct_model_naming_conventions`  [[32mOK[0m in 0.15s]
+[0m20:21:52  22 of 48 START sql view model `analytics_evaluation`.`fct_source_directories` .. [RUN]
+[0m20:21:52  21 of 48 OK created sql view model `analytics_evaluation`.`fct_public_models_without_contract`  [[32mOK[0m in 0.11s]
+[0m20:21:52  23 of 48 START sql view model `analytics_evaluation`.`fct_sources_without_freshness`  [RUN]
+[0m20:21:52  22 of 48 OK created sql view model `analytics_evaluation`.`fct_source_directories`  [[32mOK[0m in 0.10s]
+[0m20:21:52  24 of 48 START sql view model `analytics_evaluation`.`fct_undocumented_models` . [RUN]
+[0m20:21:52  23 of 48 OK created sql view model `analytics_evaluation`.`fct_sources_without_freshness`  [[32mOK[0m in 0.18s]
+[0m20:21:52  25 of 48 START sql view model `analytics_evaluation`.`fct_undocumented_public_models`  [RUN]
+[0m20:21:52  24 of 48 OK created sql view model `analytics_evaluation`.`fct_undocumented_models`  [[32mOK[0m in 0.19s]
+[0m20:21:52  26 of 48 START sql view model `analytics_evaluation`.`fct_undocumented_source_tables`  [RUN]
+[0m20:21:52  25 of 48 OK created sql view model `analytics_evaluation`.`fct_undocumented_public_models`  [[32mOK[0m in 0.10s]
+[0m20:21:52  27 of 48 START sql view model `analytics_evaluation`.`fct_undocumented_sources`  [RUN]
+[0m20:21:52  26 of 48 OK created sql view model `analytics_evaluation`.`fct_undocumented_source_tables`  [[32mOK[0m in 0.10s]
+[0m20:21:52  28 of 48 START sql view model `analytics_evaluation`.`int_direct_relationships`  [RUN]
+[0m20:21:52  27 of 48 OK created sql view model `analytics_evaluation`.`fct_undocumented_sources`  [[32mOK[0m in 0.10s]
+[0m20:21:52  28 of 48 OK created sql view model `analytics_evaluation`.`int_direct_relationships`  [[32mOK[0m in 0.09s]
+[0m20:21:53  29 of 48 START sql view model `analytics_evaluation`.`fct_test_directories` .... [RUN]
+[0m20:21:53  30 of 48 START sql table model `analytics_evaluation`.`int_all_dag_relationships`  [RUN]
+[0m20:21:53  29 of 48 OK created sql view model `analytics_evaluation`.`fct_test_directories`  [[32mOK[0m in 0.12s]
+[0m20:21:53  31 of 48 START sql view model `analytics_evaluation`.`int_model_test_summary` .. [RUN]
+[0m20:21:53  31 of 48 OK created sql view model `analytics_evaluation`.`int_model_test_summary`  [[32mOK[0m in 0.11s]
+[0m20:21:53  32 of 48 START sql view model `analytics_evaluation`.`fct_missing_primary_key_tests`  [RUN]
+[0m20:21:53  32 of 48 OK created sql view model `analytics_evaluation`.`fct_missing_primary_key_tests`  [[32mOK[0m in 0.09s]
+[0m20:21:53  33 of 48 START sql view model `analytics_evaluation`.`fct_test_coverage` ....... [RUN]
+[0m20:21:53  33 of 48 OK created sql view model `analytics_evaluation`.`fct_test_coverage` .. [[32mOK[0m in 0.09s]
+[0m20:21:53  30 of 48 OK created sql table model `analytics_evaluation`.`int_all_dag_relationships`  [[32mOK[0m in 0.65s]
+[0m20:21:53  34 of 48 START sql view model `analytics_evaluation`.`fct_chained_views_dependencies`  [RUN]
+[0m20:21:53  35 of 48 START sql table model `analytics_evaluation`.`fct_direct_join_to_source`  [RUN]
+[0m20:21:53  34 of 48 OK created sql view model `analytics_evaluation`.`fct_chained_views_dependencies`  [[32mOK[0m in 0.13s]
+[0m20:21:53  36 of 48 START sql view model `analytics_evaluation`.`fct_exposure_parents_materializations`  [RUN]
+[0m20:21:53  35 of 48 OK created sql table model `analytics_evaluation`.`fct_direct_join_to_source`  [[32mOK[0m in 0.19s]
+[0m20:21:53  37 of 48 START sql view model `analytics_evaluation`.`fct_exposures_dependent_on_private_models`  [RUN]
+[0m20:21:53  36 of 48 OK created sql view model `analytics_evaluation`.`fct_exposure_parents_materializations`  [[32mOK[0m in 0.12s]
+[0m20:21:53  38 of 48 START sql table model `analytics_evaluation`.`fct_marts_or_intermediate_dependent_on_source`  [RUN]
+[0m20:21:53  37 of 48 OK created sql view model `analytics_evaluation`.`fct_exposures_dependent_on_private_models`  [[32mOK[0m in 0.10s]
+[0m20:21:54  39 of 48 START sql view model `analytics_evaluation`.`fct_model_directories` ... [RUN]
+[0m20:21:54  38 of 48 OK created sql table model `analytics_evaluation`.`fct_marts_or_intermediate_dependent_on_source`  [[32mOK[0m in 0.16s]
+[0m20:21:54  40 of 48 START sql table model `analytics_evaluation`.`fct_model_fanout` ....... [RUN]
+[0m20:21:54  39 of 48 OK created sql view model `analytics_evaluation`.`fct_model_directories`  [[32mOK[0m in 0.14s]
+[0m20:21:54  41 of 48 START sql table model `analytics_evaluation`.`fct_multiple_sources_joined`  [RUN]
+[0m20:21:54  41 of 48 OK created sql table model `analytics_evaluation`.`fct_multiple_sources_joined`  [[32mOK[0m in 0.16s]
+[0m20:21:54  42 of 48 START sql table model `analytics_evaluation`.`fct_rejoining_of_upstream_concepts`  [RUN]
+[0m20:21:54  40 of 48 OK created sql table model `analytics_evaluation`.`fct_model_fanout` .. [[32mOK[0m in 0.26s]
+[0m20:21:54  43 of 48 START sql table model `analytics_evaluation`.`fct_root_models` ........ [RUN]
+[0m20:21:54  42 of 48 OK created sql table model `analytics_evaluation`.`fct_rejoining_of_upstream_concepts`  [[32mOK[0m in 0.22s]
+[0m20:21:54  43 of 48 OK created sql table model `analytics_evaluation`.`fct_root_models` ... [[32mOK[0m in 0.15s]
+[0m20:21:54  44 of 48 START sql table model `analytics_evaluation`.`fct_source_fanout` ...... [RUN]
+[0m20:21:54  45 of 48 START sql table model `analytics_evaluation`.`fct_staging_dependent_on_marts_or_intermediate`  [RUN]
+[0m20:21:54  45 of 48 OK created sql table model `analytics_evaluation`.`fct_staging_dependent_on_marts_or_intermediate`  [[32mOK[0m in 0.16s]
+[0m20:21:54  44 of 48 OK created sql table model `analytics_evaluation`.`fct_source_fanout` . [[32mOK[0m in 0.17s]
+[0m20:21:54  46 of 48 START sql table model `analytics_evaluation`.`fct_staging_dependent_on_staging`  [RUN]
+[0m20:21:54  47 of 48 START sql table model `analytics_evaluation`.`fct_too_many_joins` ..... [RUN]
+[0m20:21:54  47 of 48 OK created sql table model `analytics_evaluation`.`fct_too_many_joins`  [[32mOK[0m in 0.17s]
+[0m20:21:54  46 of 48 OK created sql table model `analytics_evaluation`.`fct_staging_dependent_on_staging`  [[32mOK[0m in 0.17s]
+[0m20:21:54  48 of 48 START sql table model `analytics_evaluation`.`fct_unused_sources` ..... [RUN]
+[0m20:21:55  48 of 48 OK created sql table model `analytics_evaluation`.`fct_unused_sources`  [[32mOK[0m in 0.13s]
+[0m20:21:55  
+[0m20:21:55  Finished running 1 project hook, 25 table models, 23 view models in 0 hours 0 minutes and 7.54 seconds (7.54s).
+[0m20:21:55  
+[0m20:21:55  [32mCompleted successfully[0m
+[0m20:21:55  
+[0m20:21:55  Done. PASS=49 WARN=0 ERROR=0 SKIP=0 NO-OP=0 TOTAL=49
+python -m scripts.run_dbt test --select package:dbt_project_evaluator --log reports/project_evaluator_test.log
+20:21:58  Running with dbt=1.10.23
+20:21:58  This version of dbt is deprecated and no longer receives regular patches, including for known bugs. We recommend upgrading to a newer supported version of dbt: https://docs.getdbt.com/docs/dbt-versions
+20:21:59  Registered adapter: clickhouse=1.10.3
+20:22:02  Found 54 models, 147 data tests, 2 seeds, 1 operation, 2 sources, 941 macros
+20:22:02  
+20:22:02  Concurrency: 2 threads (target='dev')
+20:22:02  
+20:22:03  1 of 1 START hook: transaction_analytics.on-run-start.0 ........................ [RUN]
+20:22:03  1 of 1 OK hook: transaction_analytics.on-run-start.0 ........................... [OK in 0.07s]
+20:22:03  
+20:22:03  1 of 29 START test is_empty_fct_chained_views_dependencies_ .................... [RUN]
+20:22:03  2 of 29 START test is_empty_fct_direct_join_to_source_ ......................... [RUN]
+20:22:03  2 of 29 PASS is_empty_fct_direct_join_to_source_ ............................... [PASS in 0.20s]
+20:22:03  1 of 29 PASS is_empty_fct_chained_views_dependencies_ .......................... [PASS in 0.21s]
+20:22:03  3 of 29 START test is_empty_fct_duplicate_sources_ ............................. [RUN]
+20:22:03  4 of 29 START test is_empty_fct_exposure_parents_materializations_ ............. [RUN]
+20:22:03  3 of 29 PASS is_empty_fct_duplicate_sources_ ................................... [PASS in 0.07s]
+20:22:03  5 of 29 START test is_empty_fct_exposures_dependent_on_private_models_ ......... [RUN]
+20:22:03  4 of 29 PASS is_empty_fct_exposure_parents_materializations_ ................... [PASS in 0.08s]
+20:22:03  6 of 29 START test is_empty_fct_hard_coded_references_ ......................... [RUN]
+20:22:03  6 of 29 PASS is_empty_fct_hard_coded_references_ ............................... [PASS in 0.05s]
+20:22:03  5 of 29 PASS is_empty_fct_exposures_dependent_on_private_models_ ............... [PASS in 0.09s]
+20:22:03  7 of 29 START test is_empty_fct_marts_or_intermediate_dependent_on_source_ ..... [RUN]
+20:22:03  8 of 29 START test is_empty_fct_missing_primary_key_tests_ ..................... [RUN]
+20:22:03  7 of 29 PASS is_empty_fct_marts_or_intermediate_dependent_on_source_ ........... [PASS in 0.06s]
+20:22:03  9 of 29 START test is_empty_fct_model_directories_ ............................. [RUN]
+20:22:03  9 of 29 PASS is_empty_fct_model_directories_ ................................... [PASS in 0.09s]
+20:22:03  10 of 29 START test is_empty_fct_model_fanout_ ................................. [RUN]
+20:22:03  10 of 29 PASS is_empty_fct_model_fanout_ ....................................... [PASS in 0.05s]
+20:22:03  11 of 29 START test is_empty_fct_model_naming_conventions_ ..................... [RUN]
+20:22:03  11 of 29 PASS is_empty_fct_model_naming_conventions_ ........................... [PASS in 0.11s]
+20:22:03  8 of 29 PASS is_empty_fct_missing_primary_key_tests_ ........................... [PASS in 0.35s]
+20:22:03  12 of 29 START test is_empty_fct_multiple_sources_joined_ ...................... [RUN]
+20:22:03  13 of 29 START test is_empty_fct_public_models_without_contract_ ............... [RUN]
+20:22:03  12 of 29 PASS is_empty_fct_multiple_sources_joined_ ............................ [PASS in 0.06s]
+20:22:03  14 of 29 START test is_empty_fct_rejoining_of_upstream_concepts_ ............... [RUN]
+20:22:03  13 of 29 PASS is_empty_fct_public_models_without_contract_ ..................... [PASS in 0.07s]
+20:22:03  15 of 29 START test is_empty_fct_root_models_ .................................. [RUN]
+20:22:04  14 of 29 PASS is_empty_fct_rejoining_of_upstream_concepts_ ..................... [PASS in 0.07s]
+20:22:04  15 of 29 PASS is_empty_fct_root_models_ ........................................ [PASS in 0.06s]
+20:22:04  16 of 29 START test is_empty_fct_source_directories_ ........................... [RUN]
+20:22:04  17 of 29 START test is_empty_fct_source_fanout_ ................................ [RUN]
+20:22:04  17 of 29 PASS is_empty_fct_source_fanout_ ...................................... [PASS in 0.05s]
+20:22:04  16 of 29 PASS is_empty_fct_source_directories_ ................................. [PASS in 0.07s]
+20:22:04  18 of 29 START test is_empty_fct_sources_without_freshness_ .................... [RUN]
+20:22:04  19 of 29 START test is_empty_fct_staging_dependent_on_marts_or_intermediate_ ... [RUN]
+20:22:04  19 of 29 PASS is_empty_fct_staging_dependent_on_marts_or_intermediate_ ......... [PASS in 0.05s]
+20:22:04  18 of 29 PASS is_empty_fct_sources_without_freshness_ .......................... [PASS in 0.07s]
+20:22:04  20 of 29 START test is_empty_fct_staging_dependent_on_staging_ ................. [RUN]
+20:22:04  21 of 29 START test is_empty_fct_test_directories_ ............................. [RUN]
+20:22:04  20 of 29 PASS is_empty_fct_staging_dependent_on_staging_ ....................... [PASS in 0.07s]
+20:22:04  22 of 29 START test is_empty_fct_too_many_joins_ ............................... [RUN]
+20:22:04  22 of 29 PASS is_empty_fct_too_many_joins_ ..................................... [PASS in 0.06s]
+20:22:04  23 of 29 START test is_empty_fct_undocumented_models_ .......................... [RUN]
+20:22:04  21 of 29 PASS is_empty_fct_test_directories_ ................................... [PASS in 0.19s]
+20:22:04  24 of 29 START test is_empty_fct_undocumented_public_models_ ................... [RUN]
+20:22:04  23 of 29 PASS is_empty_fct_undocumented_models_ ................................ [PASS in 0.08s]
+20:22:04  25 of 29 START test is_empty_fct_undocumented_source_tables_ ................... [RUN]
+20:22:04  24 of 29 PASS is_empty_fct_undocumented_public_models_ ......................... [PASS in 0.08s]
+20:22:04  26 of 29 START test is_empty_fct_undocumented_sources_ ......................... [RUN]
+20:22:04  25 of 29 PASS is_empty_fct_undocumented_source_tables_ ......................... [PASS in 0.08s]
+20:22:04  27 of 29 START test is_empty_fct_unused_sources_ ............................... [RUN]
+20:22:04  26 of 29 PASS is_empty_fct_undocumented_sources_ ............................... [PASS in 0.06s]
+20:22:04  28 of 29 START test valid_documentation_coverage ............................... [RUN]
+20:22:04  27 of 29 PASS is_empty_fct_unused_sources_ ..................................... [PASS in 0.08s]
+20:22:04  29 of 29 START test valid_test_coverage ........................................ [RUN]
+20:22:04  28 of 29 PASS valid_documentation_coverage ..................................... [PASS in 0.18s]
+20:22:05  29 of 29 PASS valid_test_coverage .............................................. [PASS in 0.44s]
+20:22:05  
+20:22:05  Finished running 1 project hook, 29 data tests in 0 hours 0 minutes and 2.35 seconds (2.35s).
+20:22:05  
+20:22:05  Completed successfully
+20:22:05  
+20:22:05  Done. PASS=30 WARN=0 ERROR=0 SKIP=0 NO-OP=0 TOTAL=30
+dbt docs generate --project-dir dbt --profiles-dir dbt
+[0m20:22:08  Running with dbt=1.10.23
+[0m20:22:08  This version of dbt is deprecated and no longer receives regular patches, including for known bugs. We recommend upgrading to a newer supported version of dbt: https://docs.getdbt.com/docs/dbt-versions
+[0m20:22:08  Registered adapter: clickhouse=1.10.3
+[0m20:22:11  Found 54 models, 147 data tests, 2 seeds, 1 operation, 2 sources, 941 macros
+[0m20:22:11  
+[0m20:22:11  Concurrency: 2 threads (target='dev')
+[0m20:22:11  
+[0m20:22:17  Building catalog
+[0m20:22:18  Catalog written to /workspace/dbt/target/catalog.json
+python -m scripts.export_lineage
+{"lineage_svg": "/workspace/docs/lineage.svg", "nodes": 8, "edges": 7}
+python -m scripts.run_checks
+test_integer_keys_stable_and_names_do_not_merge_addresses (tests.test_clients.ClientRegistryTest.test_integer_keys_stable_and_names_do_not_merge_addresses) ... ok
+test_new_clients_do_not_renumber_existing_keys (tests.test_clients.ClientRegistryTest.test_new_clients_do_not_renumber_existing_keys) ... ok
+test_dc_is_a_federal_district_and_directory_has_no_unknown (tests.test_loading.SourceValidationTest.test_dc_is_a_federal_district_and_directory_has_no_unknown) ... ok
+test_invalid_rows_are_rejected (tests.test_loading.SourceValidationTest.test_invalid_rows_are_rejected) ... ok
+test_money_and_postal_codes_keep_precision (tests.test_loading.SourceValidationTest.test_money_and_postal_codes_keep_precision) ... ok
+test_failed_insert_and_retry_preserve_published_rows_and_ids (tests.test_loading_integration.LoaderIntegrationTest.test_failed_insert_and_retry_preserve_published_rows_and_ids) ... ok
+test_invalid_source_does_not_replace_valid_tables (tests.test_loading_integration.LoaderIntegrationTest.test_invalid_source_does_not_replace_valid_tables) ... ok
+test_mismatched_registry_is_rejected (tests.test_loading_integration.LoaderIntegrationTest.test_mismatched_registry_is_rejected) ... ok
+test_reimport_and_reorder_keep_integer_client_ids (tests.test_loading_integration.LoaderIntegrationTest.test_reimport_and_reorder_keep_integer_client_ids) ... ok
+
+----------------------------------------------------------------------
+Ran 9 tests in 2.385s
+
+OK
+python -m scripts.verify_results
+{
+  "status": "success",
+  "source": {
+    "rows": 786431,
+    "frauds": 4504,
+    "fraud_rate_pct": 0.5727139443892726,
+    "total_amount": "55239932.49",
+    "clients": 965,
+    "merchants": 693,
+    "regions": 51
+  },
+  "marts": {
+    "mart_daily_state_metrics": {
+      "rows": 21386,
+      "all_rows_reconciled": true
+    },
+    "mart_fraud_by_category": {
+      "rows": 14,
+      "all_rows_reconciled": true
+    },
+    "mart_fraud_by_state": {
+      "rows": 51,
+      "all_rows_reconciled": true
+    },
+    "mart_customer_risk_profile": {
+      "rows": 965,
+      "all_rows_reconciled": true
+    }
+  },
+  "versions": {
+    "dbt-core": "1.10.23",
+    "dbt-clickhouse": "1.10.3",
+    "clickhouse-connect": "0.10.0"
+  },
+  "dbt_tests": {
+    "total": 118,
+    "statuses": {
+      "pass": 118
+    }
+  },
+  "project_evaluator_tests": {
+    "total": 29,
+    "statuses": {
+      "pass": 29
+    }
+  },
+  "singular_tests": [
+    "assert_aggregate_reconciliation",
+    "assert_calendar_and_shares",
+    "assert_client_registry_integrity",
+    "assert_fraud_rate_bounds",
+    "assert_fraud_reconciliation",
+    "assert_macro_boundaries",
+    "assert_no_negative_amounts",
+    "assert_risk_boundaries"
+  ],
+  "docs_generated": true,
+  "loader_tests": {
+    "tests": 9,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "passed": 9
+  },
+  "documentation_screenshot": "pending_manual_capture: managed browser policy blocks localhost",
+  "lineage_svg": "docs/lineage.svg",
+  "client_key": "SQLite INTEGER PRIMARY KEY AUTOINCREMENT; UNIQUE identity tuple",
+  "risk_distribution": [
+    {
+      "risk_level": "HIGH",
+      "clients": 57
+    },
+    {
+      "risk_level": "LOW",
+      "clients": 678
+    },
+    {
+      "risk_level": "MEDIUM",
+      "clients": 230
+    }
+  ],
+  "source_receipt": [
+    {
+      "source_sha256": "2fd291f0d66cbb1f3c3e442396f3725d4cbde650d5dd0c16322c5230d3776b99",
+      "registry_uuid": "d9270e2c-8f3f-416c-a3fa-de8634682657",
+      "source_rows": 786431,
+      "fraud_rows": 4504,
+      "total_amount": "55239932.49",
+      "client_count": 965
+    }
+  ]
+}

@@ -1,241 +1,71 @@
-name: real-time-fraud-detection-ht3
+name: transaction-analytics
 
-x-app: &app
-  image: fraud-ht3-app:local
-  build:
-    context: .
-    dockerfile: Dockerfile
-  environment: &app-env
-    DATABASE_URL: postgresql://fraud:${POSTGRES_PASSWORD:-local-dev-password}@postgres:5432/fraud
-    ARTIFACTS_ROOT: /shared
-    MODEL_DIR: /shared/models
-    AIRFLOW_ADMIN_USER: ${AIRFLOW_ADMIN_USER:-admin}
-    AIRFLOW_ADMIN_PASSWORD: ${AIRFLOW_ADMIN_PASSWORD:-admin}
-    KAFKA_BOOTSTRAP_SERVERS: kafka:19092
-    FRAUD_THRESHOLD: "0.98"
+x-dbt: &dbt
+  image: transaction-analytics:local
+  build: .
+  environment:
+    CLICKHOUSE_HOST: clickhouse
+    CLICKHOUSE_PORT: "8123"
+    CLICKHOUSE_USER: analytics
+    CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:-local-clickhouse-password}
+    RAW_DATABASE: transactions_db
+    ANALYTICS_DATABASE: analytics
+    CLIENT_REGISTRY: /state/clients.sqlite
     TRAIN_DATA_CSV: /data/train.csv
-    SUPPLY_BATCH_SIZE: ${SUPPLY_BATCH_SIZE:-100000}
-    HISTORY_MONTHS: ${HISTORY_MONTHS:-36}
-    TRAIN_ITERATIONS: ${TRAIN_ITERATIONS:-100}
+    DBT_PROFILES_DIR: /workspace/dbt
+    DBT_SEND_ANONYMOUS_USAGE_STATS: "false"
   volumes:
-    - ./artifacts:/shared
-
-x-airflow: &airflow
-  image: fraud-ht3-airflow:local
-  build:
-    context: .
-    dockerfile: airflow/Dockerfile
-  environment: &airflow-env
-    <<: *app-env
-    AIRFLOW__CORE__EXECUTOR: LocalExecutor
-    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://fraud:${POSTGRES_PASSWORD:-local-dev-password}@postgres:5432/airflow
-    AIRFLOW__CORE__LOAD_EXAMPLES: "false"
-    AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: "false"
-    AIRFLOW__CORE__PARALLELISM: "2"
-    AIRFLOW__CORE__MAX_ACTIVE_TASKS_PER_DAG: "1"
-    AIRFLOW__SCHEDULER__PARSING_PROCESSES: "1"
-    AIRFLOW__SCHEDULER__MIN_FILE_PROCESS_INTERVAL: "60"
-    AIRFLOW__SCHEDULER__ENABLE_HEALTH_CHECK: "true"
-    AIRFLOW__WEBSERVER__WORKERS: "1"
-    AIRFLOW__WEBSERVER__SECRET_KEY: local-homework-shared-web-secret
-    AIRFLOW__API__AUTH_BACKENDS: airflow.api.auth.backend.basic_auth,airflow.api.auth.backend.session
-    AIRFLOW_ADMIN_USER: ${AIRFLOW_ADMIN_USER:-admin}
-    AIRFLOW_ADMIN_PASSWORD: ${AIRFLOW_ADMIN_PASSWORD:-admin}
-  volumes:
-    - ./artifacts:/shared
-    - airflow_logs:/opt/airflow/logs
+    - ./dbt:/workspace/dbt
+    - ./reports:/workspace/reports
+    - ./docs:/workspace/docs
+    - registry_data:/state
+    - ${TRAIN_DATA_CSV:-./teta-ml-1-2025/train.csv}:/data/train.csv:ro
   depends_on:
-    airflow-init:
-      condition: service_completed_successfully
-  restart: unless-stopped
+    clickhouse:
+      condition: service_healthy
 
 services:
-  kafka-volume-init:
-    image: apache/kafka:4.3.1
-    user: "0:0"
-    entrypoint: ["/bin/sh", "-ec"]
-    command: ["chown -R 1000:1000 /tmp/kraft-combined-logs"]
-    volumes:
-      - kafka_data:/tmp/kraft-combined-logs
-
-  kafka:
-    image: apache/kafka:4.3.1
-    hostname: kafka
+  clickhouse:
+    image: clickhouse/clickhouse-server:26.8.20.9
     restart: unless-stopped
-    mem_limit: 1536m
-    ports:
-      - "127.0.0.1:${KAFKA_HOST_PORT:-9094}:9094"
+    mem_limit: 2g
     environment:
-      KAFKA_NODE_ID: 1
-      KAFKA_PROCESS_ROLES: broker,controller
-      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:29093
-      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
-      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
-      KAFKA_LISTENERS: CONTROLLER://:29093,PLAINTEXT://:19092,PLAINTEXT_HOST://:9094
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:19092,PLAINTEXT_HOST://localhost:${KAFKA_HOST_PORT:-9094}
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
-      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
-      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
-      KAFKA_LOG_DIRS: /tmp/kraft-combined-logs
-      KAFKA_HEAP_OPTS: -Xms256m -Xmx768m
-      CLUSTER_ID: 4L6g3nShT-eMCtK--X86sw
+      CLICKHOUSE_DB: transactions_db
+      CLICKHOUSE_USER: analytics
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:-local-clickhouse-password}
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: "1"
+    ports:
+      - "127.0.0.1:${CLICKHOUSE_HTTP_PORT:-8123}:8123"
     volumes:
-      - kafka_data:/tmp/kraft-combined-logs
-    depends_on:
-      kafka-volume-init:
-        condition: service_completed_successfully
+      - clickhouse_data:/var/lib/clickhouse
+    ulimits:
+      nofile:
+        soft: 262144
+        hard: 262144
     healthcheck:
-      test: ["CMD", "/opt/kafka/bin/kafka-topics.sh", "--bootstrap-server", "kafka:19092", "--list"]
-      interval: 10s
-      timeout: 10s
+      test: ["CMD-SHELL", "clickhouse-client --user \"$$CLICKHOUSE_USER\" --password \"$$CLICKHOUSE_PASSWORD\" --query 'SELECT 1'"]
+      interval: 5s
+      timeout: 5s
       retries: 24
       start_period: 20s
 
-  kafka-init:
-    image: apache/kafka:4.3.1
-    depends_on:
-      kafka:
-        condition: service_healthy
-    entrypoint: ["/bin/bash", "-ec"]
-    command:
-      - |
-        /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:19092 --create --if-not-exists --topic transactions --partitions 1 --replication-factor 1
-        /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:19092 --create --if-not-exists --topic scores --partitions 1 --replication-factor 1
-
-  postgres:
-    image: postgres:16.4-alpine
-    restart: unless-stopped
-    environment:
-      POSTGRES_DB: fraud
-      POSTGRES_USER: fraud
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-local-dev-password}
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./sql/init-databases.sh:/docker-entrypoint-initdb.d/001-databases.sh:ro
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U fraud -d fraud"]
-      interval: 5s
-      timeout: 5s
-      retries: 20
-
-  artifact-init:
-    <<: *app
-    user: "0:0"
-    entrypoint: ["/bin/sh", "-ec"]
-    command: ["mkdir -p /shared/models /shared/work /shared/dq_reports /opt/airflow/logs && chown -R 50000:0 /shared /opt/airflow/logs && chmod -R g+rwX /shared /opt/airflow/logs"]
-    volumes:
-      - ./artifacts:/shared
-      - airflow_logs:/opt/airflow/logs
-
-  data-init:
-    <<: *app
-    user: "50000:0"
-    command: ["python", "-m", "pipeline.initialize"]
-    volumes:
-      - ./artifacts:/shared
-      - ${TRAIN_DATA_CSV:-./teta-ml-1-2025/train.csv}:/data/train.csv:ro
-    depends_on:
-      artifact-init:
-        condition: service_completed_successfully
-      postgres:
-        condition: service_healthy
-
-  model-init:
-    <<: *app
-    user: "50000:0"
-    command: ["python", "-m", "pipeline.bootstrap"]
-    depends_on:
-      data-init:
-        condition: service_completed_successfully
-
-  airflow-init:
-    <<: *airflow
-    restart: "no"
-    command: ["python", "/app/airflow_init.py"]
-    depends_on:
-      model-init:
-        condition: service_completed_successfully
-
-  airflow-scheduler:
-    <<: *airflow
-    command: scheduler
-    healthcheck:
-      test: ["CMD", "curl", "--fail", "http://localhost:8974/health"]
-      interval: 15s
-      timeout: 10s
-      retries: 20
-      start_period: 30s
-
-  airflow-webserver:
-    <<: *airflow
-    command: webserver
-    ports:
-      - "127.0.0.1:${AIRFLOW_WEB_PORT:-8081}:8080"
-    healthcheck:
-      test: ["CMD", "curl", "--fail", "http://localhost:8080/health"]
-      interval: 15s
-      timeout: 10s
-      retries: 20
-      start_period: 30s
-
-  scoring-service:
-    <<: *app
-    restart: unless-stopped
-    command: ["python", "-m", "scoring_service.app"]
-    volumes:
-      - ./artifacts/models:/shared/models:ro
-    depends_on:
-      model-init:
-        condition: service_completed_successfully
-      kafka-init:
-        condition: service_completed_successfully
-
-  scores-sink:
-    <<: *app
-    restart: unless-stopped
-    command: ["python", "-m", "scores_sink.app"]
-    depends_on:
-      data-init:
-        condition: service_completed_successfully
-      kafka-init:
-        condition: service_completed_successfully
-
-  interface:
-    build:
-      context: .
-      dockerfile: interface/Dockerfile
-    restart: unless-stopped
-    environment:
-      <<: *app-env
-    ports:
-      - "127.0.0.1:${STREAMLIT_PORT:-8501}:8501"
-    depends_on:
-      data-init:
-        condition: service_completed_successfully
-      kafka-init:
-        condition: service_completed_successfully
-    healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8501/_stcore/health')"]
-      interval: 15s
-      timeout: 5s
-      retries: 15
-
-  tools:
-    <<: *app
+  dbt:
+    <<: *dbt
     profiles: ["tools"]
-    volumes:
-      - ./artifacts:/shared
-      - ./reports:/app/reports
-    depends_on:
-      model-init:
-        condition: service_completed_successfully
-      kafka-init:
-        condition: service_completed_successfully
-    command: ["python", "-m", "scripts.smoke_stack"]
+
+  dbt-docs:
+    <<: *dbt
+    profiles: ["docs"]
+    working_dir: /workspace/dbt
+    command: ["dbt", "docs", "serve", "--host", "0.0.0.0", "--port", "8080", "--no-browser"]
+    ports:
+      - "127.0.0.1:${DBT_DOCS_PORT:-8080}:8080"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8080/index.html')"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
 
 volumes:
-  kafka_data:
-  postgres_data:
-  airflow_logs:
+  clickhouse_data:
+  registry_data:

@@ -1,0 +1,11 @@
+packages:
+  - name: dbt_utils
+    package: dbt-labs/dbt_utils
+    version: 1.4.1
+  - name: dbt_date
+    package: godatadriven/dbt_date
+    version: 0.21.0
+  - name: dbt_project_evaluator
+    package: dbt-labs/dbt_project_evaluator
+    version: 1.4.1
+sha1_hash: 33321d8a3f4f63cda8a99b5a230e2163265e9321

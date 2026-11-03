@@ -1,0 +1,24 @@
+version: 2
+seeds:
+- name: states
+  description: Reference of 50 US states and the District of Columbia. DC is a federal
+    district, not an unknown value.
+  columns:
+  - name: state_code
+    description: Two-letter region code.
+    data_tests:
+    - not_null
+    - unique
+  - name: state_name
+    description: Full region name.
+    data_tests:
+    - not_null
+  - name: region_type
+    description: STATE or FEDERAL_DISTRICT.
+    data_tests:
+    - not_null
+    - accepted_values:
+        arguments:
+          values:
+          - STATE
+          - FEDERAL_DISTRICT

@@ -1,0 +1,52 @@
+state_code,state_name,region_type
+AK,Alaska,STATE
+AL,Alabama,STATE
+AR,Arkansas,STATE
+AZ,Arizona,STATE
+CA,California,STATE
+CO,Colorado,STATE
+CT,Connecticut,STATE
+DC,District of Columbia,FEDERAL_DISTRICT
+DE,Delaware,STATE
+FL,Florida,STATE
+GA,Georgia,STATE
+HI,Hawaii,STATE
+IA,Iowa,STATE
+ID,Idaho,STATE
+IL,Illinois,STATE
+IN,Indiana,STATE
+KS,Kansas,STATE
+KY,Kentucky,STATE
+LA,Louisiana,STATE
+MA,Massachusetts,STATE
+MD,Maryland,STATE
+ME,Maine,STATE
+MI,Michigan,STATE
+MN,Minnesota,STATE
+MO,Missouri,STATE
+MS,Mississippi,STATE
+MT,Montana,STATE
+NC,North Carolina,STATE
+ND,North Dakota,STATE
+NE,Nebraska,STATE
+NH,New Hampshire,STATE
+NJ,New Jersey,STATE
+NM,New Mexico,STATE
+NV,Nevada,STATE
+NY,New York,STATE
+OH,Ohio,STATE
+OK,Oklahoma,STATE
+OR,Oregon,STATE
+PA,Pennsylvania,STATE
+RI,Rhode Island,STATE
+SC,South Carolina,STATE
+SD,South Dakota,STATE
+TN,Tennessee,STATE
+TX,Texas,STATE
+UT,Utah,STATE
+VA,Virginia,STATE
+VT,Vermont,STATE
+WA,Washington,STATE
+WI,Wisconsin,STATE
+WV,West Virginia,STATE
+WY,Wyoming,STATE
