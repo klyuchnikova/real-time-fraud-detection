@@ -1,0 +1,12 @@
+{
+  "name": "geosearch-architecture-diagrams",
+  "private": true,
+  "scripts": { "render": "node render.cjs" },
+  "devDependencies": {
+    "@mermaid-js/layout-elk": "1.0.2",
+    "bpmn-js": "18.31.1",
+    "esbuild": "0.28.2",
+    "mermaid": "12.3.0",
+    "playwright": "1.62.1"
+  }
+}

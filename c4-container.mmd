@@ -1,0 +1,51 @@
+---
+title: C4 — контейнеры
+config:
+  layout: elk
+---
+flowchart TB
+    user["Пользователь<br/>«Person»"]
+    verticals["Другие вертикали · N систем<br/>«External System»<br/>Кино, энциклопедия и другие"]
+    data["Подготовка поисковых данных<br/>«External System»"]
+    ml["Платформа обучения и оценки<br/>«External System»"]
+
+    subgraph system["Система формирования поисковой страницы · Google"]
+        api["Оркестратор и сборщик страницы<br/>«Container · C++ / HTTP, gRPC»<br/>Контекст, параллельные вызовы, таймауты,<br/>карточка победителя и веб-результаты"]
+        web["Веб-поиск<br/>«Container · C++»<br/>Кэш, поиск и ранжирование веб-документов"]
+        geo["Геопоиск<br/>«Container · C++»<br/>Кэш кандидатов, retrieval, фильтрация,<br/>ранжирование v2 и подготовка блока"]
+        scores["ML-сервис геопоиска<br/>«Container · Python / gRPC»<br/>Классификаторы запроса, ранние фильтры,<br/>ранжирование v2 и оценка релевантности"]
+        blend["Верхний блендер<br/>«Container · C++ / ML runtime»<br/>Общий скор полезности блоков,<br/>порог и выбор одного победителя"]
+        wc[("Кэш веб-результатов<br/>«Container · Redis»<br/>Версионные результаты retrieval")]
+        wi[("Веб-индекс<br/>«Container · OpenSearch»<br/>Инвертированный индекс и HNSW")]
+        gc[("Геокэш<br/>«Container · Redis»<br/>ID кандидатов по запросу и области")]
+        gi[("Геоиндекс<br/>«Container · OpenSearch»<br/>Организации, топонимы и их признаки")]
+        registry[("Реестр и артефакты моделей<br/>«Container · S3-compatible storage»<br/>Манифесты версий, модели, пороги,<br/>схемы признаков и активные алиасы")]
+        events["Поток событий качества<br/>«Container · Kafka»<br/>Предложения всех вертикалей, решения,<br/>таймауты, версии, показы и действия"]
+    end
+
+    user <-->|HTTPS · запрос, действия / страница| api
+    api <-->|gRPC · запрос / веб-ответ| web
+    api <-->|gRPC · запрос / геопредложение| geo
+    api <-->|RPC · запрос / предложение| verticals
+    api <-->|gRPC · кандидаты и веб-фичи / winner_id или none| blend
+    web -->|Чтение и заполнение кэша · Redis protocol| wc
+    web -->|Поиск документов · HTTP| wi
+    geo -->|Чтение и заполнение кэша · Redis protocol| gc
+    geo -->|Поиск и получение свежих признаков · HTTP| gi
+    geo <-->|gRPC · признаки / скоры| scores
+    scores -->|HTTPS · загрузка совместимой версии| registry
+    blend -->|HTTPS · загрузка модели и порога| registry
+    api -->|Kafka protocol · асинхронные события| events
+    events -->|Поток решений и пользовательских событий| ml
+    ml -->|HTTPS · атомарная публикация манифеста| registry
+    data -->|Снимки индекса · HTTP| wi
+    data -->|Индекс, геометрия и признаки · HTTP| gi
+
+    classDef person fill:#164b78,color:#fff,stroke:#123e64,stroke-width:2px;
+    classDef container fill:#dfefff,color:#102d48,stroke:#3378ad,stroke-width:1.5px;
+    classDef storage fill:#e4f2ed,color:#163c30,stroke:#3b8067;
+    classDef external fill:#edf1f5,color:#162b3f,stroke:#73879a;
+    class user person;
+    class api,web,geo,scores,blend container;
+    class wc,wi,gc,gi,registry,events storage;
+    class verticals,data,ml external;

@@ -1,0 +1,21 @@
+---
+title: C4 — контекст
+config:
+  layout: elk
+---
+flowchart LR
+    user["Пользователь<br/>«Person»<br/>Ищет информацию и выбирает результат"]
+    search["Система формирования поисковой страницы<br/>«Software System · Google»<br/>Получает веб-результаты и геокандидатов,<br/>выбирает специальный блок и возвращает страницу"]
+    verticals["Другие вертикали · N систем<br/>«External Software Systems»<br/>Кино, энциклопедия и другие поставщики карточек"]
+    data["Подготовка поисковых данных<br/>«External Software System»<br/>Поддерживает корпус веб-документов,<br/>каталог организаций и топонимов"]
+    ml["Платформа обучения и оценки<br/>«External Software System»<br/>Разметка, оценка качества, обучение<br/>и публикация проверенных версий моделей"]
+    user <-->|Запрос и контекст / готовая страница| search
+    search <-->|Запрос и бюджет времени / блок и признаки| verticals
+    data -->|Версионные индексы и признаки документов| search
+    search <-->|События качества / одобренные модели и пороги| ml
+    classDef person fill:#164b78,color:#fff,stroke:#123e64,stroke-width:2px;
+    classDef system fill:#246ca5,color:#fff,stroke:#164b78,stroke-width:2px;
+    classDef external fill:#edf1f5,color:#162b3f,stroke:#73879a;
+    class user person;
+    class search system;
+    class verticals,data,ml external;

@@ -1,0 +1,22 @@
+{
+  "bpmn": [
+    {
+      "diagramId": "Process_Search_Diagram",
+      "warnings": []
+    },
+    {
+      "diagramId": "Process_Geo_Diagram",
+      "warnings": []
+    }
+  ],
+  "mermaid": [
+    {
+      "source": "c4-context.mmd",
+      "parsed": true
+    },
+    {
+      "source": "c4-container.mmd",
+      "parsed": true
+    }
+  ]
+}
