@@ -5,3 +5,4 @@ pandas==2.1.4
 psycopg[binary]==3.2.9
 scikit-learn==1.6.1
 joblib==1.4.2
+prometheus-client==0.22.1

@@ -2,7 +2,7 @@
 from datetime import timedelta
 import pendulum
 from airflow.decorators import dag, task
-from pipeline.quality import snapshot_dataset, evaluate_dataset, write_report, assert_report
+from pipeline.airflow_tasks import snapshot_dataset, evaluate_dataset, write_report, assert_report
 
 @dag(dag_id="data_quality", schedule="*/5 * * * *", start_date=pendulum.datetime(2026,1,1,tz="UTC"),
      catchup=False, max_active_runs=1, default_args={"retries":1,"retry_delay":timedelta(seconds=15)},

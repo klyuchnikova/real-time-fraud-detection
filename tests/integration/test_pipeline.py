@@ -140,6 +140,7 @@ class PipelineIntegrationTest(unittest.TestCase):
         source.to_csv(path,index=False)
         with connect() as connection:
             connection.execute("TRUNCATE labeled_transactions,training_state")
+            connection.execute("DROP VIEW monitoring_scores")
             connection.execute("ALTER TABLE transaction_scores DROP COLUMN model_version")
         with patch.dict(os.environ,{"TRAIN_DATA_CSV":str(path)}):
             initialize()

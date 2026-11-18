@@ -1,0 +1,512 @@
+{
+  "uid": "fraud-business",
+  "title": "Бизнес-срез",
+  "tags": [
+    "fraud",
+    "monitoring"
+  ],
+  "schemaVersion": 41,
+  "version": 1,
+  "editable": false,
+  "timezone": "browser",
+  "refresh": "5s",
+  "time": {
+    "from": "now-15m",
+    "to": "now"
+  },
+  "templating": {
+    "list": [
+      {
+        "name": "state",
+        "label": "Штат",
+        "type": "query",
+        "datasource": {
+          "type": "postgres",
+          "uid": "postgres"
+        },
+        "query": "SELECT DISTINCT us_state FROM monitoring_scores WHERE has_context ORDER BY 1",
+        "refresh": 2,
+        "multi": true,
+        "includeAll": true,
+        "sort": 1,
+        "current": {
+          "text": "All",
+          "value": "$__all"
+        },
+        "options": [],
+        "allValue": "'__all_values__'"
+      },
+      {
+        "name": "merchant",
+        "label": "Продавец",
+        "type": "query",
+        "datasource": {
+          "type": "postgres",
+          "uid": "postgres"
+        },
+        "query": "SELECT DISTINCT merch FROM monitoring_scores WHERE has_context AND ('__all_values__' IN (${state:sqlstring}) OR us_state IN (${state:sqlstring})) ORDER BY 1",
+        "refresh": 2,
+        "multi": true,
+        "includeAll": true,
+        "sort": 1,
+        "current": {
+          "text": "All",
+          "value": "$__all"
+        },
+        "options": [],
+        "allValue": "'__all_values__'"
+      }
+    ]
+  },
+  "annotations": {
+    "list": []
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Плотность скоров выбранного среза",
+      "type": "barchart",
+      "description": "20 интервалов, ширина 0,05. Площадь гистограммы равна 1; при отсутствии данных плотность не определена.",
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "postgres"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "rawSql": "WITH filtered AS (SELECT least(19, floor(score * 20)::int) AS bin FROM monitoring_scores WHERE has_context AND ('__all_values__' IN (${state:sqlstring}) OR us_state IN (${state:sqlstring})) AND ('__all_values__' IN (${merchant:sqlstring}) OR merch IN (${merchant:sqlstring})) AND $__timeFilter(scored_at)),\ncounts AS (SELECT bin, count(*) AS n FROM filtered GROUP BY bin)\nSELECT to_char(b / 20.0, 'FM0.00') || '–' || to_char((b+1) / 20.0, 'FM0.00') AS score_interval,\ncoalesce(n,0)::float / nullif((SELECT count(*) FROM filtered) * 0.05,0) AS density\nFROM generate_series(0,19) b LEFT JOIN counts ON bin=b ORDER BY b",
+          "format": "table",
+          "editorMode": "code",
+          "rawQuery": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "fillOpacity": 12,
+            "showPoints": "never",
+            "spanNulls": false
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "orientation": "vertical",
+        "showValue": "never",
+        "groupWidth": 0.8,
+        "barWidth": 0.9,
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single"
+        },
+        "xTickLabelRotation": 45,
+        "xTickLabelSpacing": 10
+      }
+    },
+    {
+      "id": 2,
+      "title": "TPS среза — время публикации скора",
+      "type": "timeseries",
+      "description": "10-секундные интервалы, нули заполнены. Время исходной операции не используется.",
+      "gridPos": {
+        "x": 12,
+        "y": 0,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "postgres"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "rawSql": "WITH counts AS (\nSELECT floor(extract(epoch FROM scored_at)/10)::bigint*10 AS bucket, count(*) AS n\nFROM monitoring_scores WHERE has_context AND ('__all_values__' IN (${state:sqlstring}) OR us_state IN (${state:sqlstring})) AND ('__all_values__' IN (${merchant:sqlstring}) OR merch IN (${merchant:sqlstring})) AND $__timeFilter(scored_at) GROUP BY 1)\nSELECT to_timestamp(b) AS time, coalesce(n,0)/10.0 AS tps\nFROM generate_series(($__unixEpochFrom()/10)*10, ($__unixEpochTo()/10)*10, 10) b\nLEFT JOIN counts ON bucket=b ORDER BY b",
+          "format": "time_series",
+          "editorMode": "code",
+          "rawQuery": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "fillOpacity": 12,
+            "showPoints": "never",
+            "spanNulls": false
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 3,
+      "title": "Доля флагов по категориям · последние 1000 глобально",
+      "type": "barchart",
+      "description": "Сначала 1000 последних записанных скоров, затем фильтры. Общий диапазон времени не применяется.",
+      "gridPos": {
+        "x": 0,
+        "y": 8,
+        "w": 16,
+        "h": 9
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "postgres"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "rawSql": "WITH recent AS (SELECT * FROM monitoring_scores ORDER BY received_order DESC LIMIT 1000) SELECT cat_id, avg(fraud_flag)::float AS fraud_share, count(*) AS sample_count FROM recent WHERE has_context AND ('__all_values__' IN (${state:sqlstring}) OR us_state IN (${state:sqlstring})) AND ('__all_values__' IN (${merchant:sqlstring}) OR merch IN (${merchant:sqlstring})) GROUP BY cat_id ORDER BY fraud_share DESC",
+          "format": "table",
+          "editorMode": "code",
+          "rawQuery": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "fillOpacity": 12,
+            "showPoints": "never",
+            "spanNulls": false
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "min": 0,
+          "max": 1
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "sample_count"
+            },
+            "properties": [
+              {
+                "id": "custom.hideFrom",
+                "value": {
+                  "viz": true,
+                  "legend": true,
+                  "tooltip": false
+                }
+              },
+              {
+                "id": "unit",
+                "value": "short"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "orientation": "horizontal",
+        "showValue": "always",
+        "groupWidth": 0.8,
+        "barWidth": 0.9,
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single"
+        },
+        "xTickLabelRotation": 0,
+        "xTickLabelSpacing": 10
+      }
+    },
+    {
+      "id": 4,
+      "title": "Размер среза среди последних 1000",
+      "type": "stat",
+      "description": "",
+      "gridPos": {
+        "x": 16,
+        "y": 8,
+        "w": 8,
+        "h": 9
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "postgres"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "rawSql": "WITH recent AS (SELECT * FROM monitoring_scores ORDER BY received_order DESC LIMIT 1000) SELECT count(*) AS sample_count FROM recent WHERE has_context AND ('__all_values__' IN (${state:sqlstring}) OR us_state IN (${state:sqlstring})) AND ('__all_values__' IN (${merchant:sqlstring}) OR merch IN (${merchant:sqlstring}))",
+          "format": "table",
+          "editorMode": "code",
+          "rawQuery": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "fillOpacity": 12,
+            "showPoints": "never",
+            "spanNulls": false
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        },
+        "text": {
+          "titleSize": 22,
+          "valueSize": 48
+        }
+      }
+    },
+    {
+      "id": 5,
+      "title": "Сумма операций с флагом по категориям",
+      "type": "barchart",
+      "description": "Сумма помеченных моделью операций; не подтверждённые потери и не предотвращённый ущерб.",
+      "gridPos": {
+        "x": 0,
+        "y": 17,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "postgres"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "rawSql": "SELECT cat_id, coalesce(sum(amount) FILTER (WHERE fraud_flag=1),0)::float AS flagged_amount FROM monitoring_scores WHERE has_context AND ('__all_values__' IN (${state:sqlstring}) OR us_state IN (${state:sqlstring})) AND ('__all_values__' IN (${merchant:sqlstring}) OR merch IN (${merchant:sqlstring})) AND $__timeFilter(scored_at) GROUP BY cat_id ORDER BY flagged_amount DESC NULLS LAST",
+          "format": "table",
+          "editorMode": "code",
+          "rawQuery": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "fillOpacity": 12,
+            "showPoints": "never",
+            "spanNulls": false
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "orientation": "horizontal",
+        "showValue": "always",
+        "groupWidth": 0.8,
+        "barWidth": 0.9,
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single"
+        },
+        "xTickLabelRotation": 0,
+        "xTickLabelSpacing": 10
+      }
+    },
+    {
+      "id": 6,
+      "title": "Результаты по версии",
+      "type": "table",
+      "description": "",
+      "gridPos": {
+        "x": 12,
+        "y": 17,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "postgres"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "rawSql": "SELECT model_version, count(*) AS scores, avg(fraud_flag)::float AS fraud_share FROM monitoring_scores WHERE has_context AND ('__all_values__' IN (${state:sqlstring}) OR us_state IN (${state:sqlstring})) AND ('__all_values__' IN (${merchant:sqlstring}) OR merch IN (${merchant:sqlstring})) AND $__timeFilter(scored_at) GROUP BY model_version ORDER BY scores DESC",
+          "format": "table",
+          "editorMode": "code",
+          "rawQuery": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "fillOpacity": 12,
+            "showPoints": "never",
+            "spanNulls": false
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "fraud_share"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percentunit"
+              },
+              {
+                "id": "decimals",
+                "value": 2
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    }
+  ]
+}

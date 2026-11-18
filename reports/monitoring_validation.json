@@ -1,0 +1,410 @@
+{
+  "checked_at": "2026-11-17T22:25:42.936645+00:00",
+  "status": "success",
+  "targets": [
+    "node",
+    "scoring",
+    "storage"
+  ],
+  "panels": {
+    "fraud-business/1/A": "ok",
+    "fraud-business/2/A": "ok",
+    "fraud-business/3/A": "ok",
+    "fraud-business/4/A": "ok",
+    "fraud-business/5/A": "ok",
+    "fraud-business/6/A": "ok",
+    "fraud-scoring/1/A": "ok",
+    "fraud-scoring/2/A": "ok",
+    "fraud-scoring/2/B": "ok",
+    "fraud-scoring/3/A": "ok",
+    "fraud-scoring/4/A": "ok",
+    "fraud-scoring/5/A": "ok",
+    "fraud-scoring/6/A": "ok",
+    "fraud-scoring/7/A": "ok",
+    "fraud-scoring/8/A": "ok",
+    "fraud-storage/1/A": "ok",
+    "fraud-storage/2/A": "ok",
+    "fraud-storage/3/A": "ok",
+    "fraud-storage/4/A": "ok",
+    "fraud-storage/5/A": "ok",
+    "fraud-storage/6/A": "ok",
+    "fraud-storage/7/A": "ok",
+    "fraud-system/1/A": "ok",
+    "fraud-system/2/A": "ok",
+    "fraud-system/3/A": "ok",
+    "fraud-system/4/A": "ok",
+    "fraud-system/5/A": "ok",
+    "fraud-system/6/A": "ok",
+    "fraud-system/7/A": "ok"
+  },
+  "provisioned_alerts": [
+    "stream-stopped",
+    "invalid-stream"
+  ],
+  "reload": {
+    "container": {
+      "id": "92d2386819a710bdc08927d5c0413e6e7c88f427b329ca3ac15ffeb907d8bb1e",
+      "started": "2026-11-17T22:01:31.666510115Z",
+      "restarts": 0
+    },
+    "events": [
+      {
+        "metric": {
+          "__name__": "fraud_model_reload_timestamp_seconds",
+          "instance": "scoring-service:8000",
+          "job": "scoring",
+          "version": "v-202005-ab908d63a8ab"
+        },
+        "value": [
+          1794955514.329,
+          "1794955476.6710398"
+        ]
+      }
+    ],
+    "training": {
+      "active_version": "v-202005-ab908d63a8ab",
+      "checked_at": "2026-11-17T22:27:24.823350+00:00",
+      "dags": {
+        "data_quality": {
+          "tasks": 4
+        },
+        "retrain_model": {
+          "tasks": 7
+        },
+        "supply_labeled_batch": {
+          "tasks": 4
+        }
+      },
+      "html_reports": [
+        "dq-03d91f233479b8fd4b51.html",
+        "dq-04d471cafde072a1fd9c.html",
+        "dq-152fc0e36377ad7a5b42.html",
+        "dq-364993d4cb2dc37d3e6f.html",
+        "dq-3e297c6c582e6248d973.html",
+        "dq-4f9a94070fd224f521d9.html",
+        "dq-653881772c013e77a847.html",
+        "dq-65b131858f051bae2798.html",
+        "dq-6ec74909429580adb250.html",
+        "dq-8fdaa1caf5e497fe0a6a.html",
+        "dq-adab50a66539ded1c19a.html",
+        "dq-bbc718a8015a65a209f8.html",
+        "dq-dc736b703cbe6dc37eba.html"
+      ],
+      "labeled_rows": 2086431,
+      "manual_runs": [
+        {
+          "dag_id": "retrain_model",
+          "run_id": "acceptance-d3623167407e4f3da853d3656ce25ef7",
+          "state": "success",
+          "tasks": [
+            {
+              "state": "success",
+              "task_id": "finish_month"
+            },
+            {
+              "state": "success",
+              "task_id": "reserve_window"
+            },
+            {
+              "state": "success",
+              "task_id": "prepare_dataset"
+            },
+            {
+              "state": "success",
+              "task_id": "train_candidate"
+            },
+            {
+              "state": "success",
+              "task_id": "evaluate_candidate"
+            },
+            {
+              "state": "success",
+              "task_id": "save_candidate"
+            },
+            {
+              "state": "success",
+              "task_id": "publish_candidate"
+            }
+          ]
+        },
+        {
+          "dag_id": "retrain_model",
+          "run_id": "acceptance-aac77c49481645a6847500d39755bcaf",
+          "state": "success",
+          "tasks": [
+            {
+              "state": "success",
+              "task_id": "prepare_dataset"
+            },
+            {
+              "state": "success",
+              "task_id": "evaluate_candidate"
+            },
+            {
+              "state": "success",
+              "task_id": "publish_candidate"
+            },
+            {
+              "state": "success",
+              "task_id": "finish_month"
+            },
+            {
+              "state": "success",
+              "task_id": "train_candidate"
+            },
+            {
+              "state": "success",
+              "task_id": "reserve_window"
+            },
+            {
+              "state": "success",
+              "task_id": "save_candidate"
+            }
+          ]
+        },
+        {
+          "dag_id": "retrain_model",
+          "run_id": "acceptance-bd2b639fcb244536a9f3775848e403ae",
+          "state": "success",
+          "tasks": [
+            {
+              "state": "success",
+              "task_id": "finish_month"
+            },
+            {
+              "state": "success",
+              "task_id": "evaluate_candidate"
+            },
+            {
+              "state": "success",
+              "task_id": "save_candidate"
+            },
+            {
+              "state": "success",
+              "task_id": "publish_candidate"
+            },
+            {
+              "state": "success",
+              "task_id": "reserve_window"
+            },
+            {
+              "state": "success",
+              "task_id": "prepare_dataset"
+            },
+            {
+              "state": "success",
+              "task_id": "train_candidate"
+            }
+          ]
+        }
+      ],
+      "new_version_metadata": {
+        "dataset": {
+          "passed": true,
+          "rows": 217745,
+          "rules": [
+            {
+              "passed": true,
+              "rule": "Required fields",
+              "violations": 0
+            },
+            {
+              "passed": true,
+              "rule": "Unique nonempty transaction IDs",
+              "violations": 0
+            },
+            {
+              "passed": true,
+              "rule": "Valid transaction timestamps",
+              "violations": 0
+            },
+            {
+              "passed": true,
+              "rule": "Binary target",
+              "violations": 0
+            },
+            {
+              "passed": true,
+              "rule": "Finite nonnegative amount and population",
+              "violations": 0
+            },
+            {
+              "passed": true,
+              "rule": "Coordinate ranges",
+              "violations": 0
+            },
+            {
+              "passed": true,
+              "rule": "Three months and both classes in train/test",
+              "violations": 0
+            }
+          ],
+          "test_month": "2020-05-01",
+          "test_rows": 100000,
+          "train_rows": 117745,
+          "window_start": "2020-03-01"
+        },
+        "decision": {
+          "accepted": true,
+          "baseline": {
+            "average_precision": 0.7230863378383747,
+            "roc_auc": 0.9754572374318282
+          },
+          "baseline_version": "v-201907-1a495b2cd705",
+          "candidate": {
+            "average_precision": 0.8434694179711295,
+            "roc_auc": 0.9879209230939723
+          },
+          "test_month": "2020-05-01",
+          "test_rows": 100000
+        },
+        "model_version": "v-202005-ab908d63a8ab",
+        "saved_at": "2026-11-17T22:44:02.592691+00:00",
+        "sha256": {
+          "model.bin": "5beac22fb149ed1db2e408c3b69725a235bd14e897e23847639e1277ba09f33d",
+          "preprocessor.json": "06ed297b46118dcecfbee1a4819fbab20d21c68e97c7f1f735d7e71ca9306fb6"
+        },
+        "snapshot_sha256": "d905e0fbff3327930c0dec3d866328673c6fbff6abe9ccd4f7da9bafb7bef52d",
+        "test_month": "2020-05-01",
+        "window_start": "2020-03-01"
+      },
+      "score_after": {
+        "fraud_flag": 0,
+        "model_version": "v-202005-ab908d63a8ab",
+        "score": 0.030851665627728616,
+        "transaction_id": "939d76ce-2d8a-4a15-aca4-724096dea1d7"
+      },
+      "score_before": {
+        "fraud_flag": 0,
+        "model_version": "v-201907-1a495b2cd705",
+        "score": 0.002463574293406774,
+        "transaction_id": "61db693a-0ebc-48f1-8646-ea9497fc0eb0"
+      },
+      "sources": [
+        {
+          "rows": 786431,
+          "sha256": "2fd291f0d66cbb1f3c3e442396f3725d4cbde650d5dd0c16322c5230d3776b99"
+        }
+      ],
+      "status": "success",
+      "supply_batches": [
+        {
+          "batch_id": "supply-202004",
+          "rows": 100000,
+          "status": "complete"
+        },
+        {
+          "batch_id": "supply-202005",
+          "rows": 100000,
+          "status": "complete"
+        },
+        {
+          "batch_id": "supply-202006",
+          "rows": 100000,
+          "status": "complete"
+        },
+        {
+          "batch_id": "supply-202007",
+          "rows": 100000,
+          "status": "complete"
+        },
+        {
+          "batch_id": "supply-202008",
+          "rows": 100000,
+          "status": "complete"
+        },
+        {
+          "batch_id": "supply-202009",
+          "rows": 100000,
+          "status": "complete"
+        },
+        {
+          "batch_id": "supply-202010",
+          "rows": 100000,
+          "status": "complete"
+        },
+        {
+          "batch_id": "supply-202011",
+          "rows": 100000,
+          "status": "complete"
+        },
+        {
+          "batch_id": "supply-202012",
+          "rows": 100000,
+          "status": "complete"
+        },
+        {
+          "batch_id": "supply-202101",
+          "rows": 100000,
+          "status": "complete"
+        },
+        {
+          "batch_id": "supply-202102",
+          "rows": 100000,
+          "status": "complete"
+        },
+        {
+          "batch_id": "supply-202103",
+          "rows": 100000,
+          "status": "complete"
+        },
+        {
+          "batch_id": "supply-202104",
+          "rows": 100000,
+          "status": "complete"
+        }
+      ]
+    }
+  },
+  "alerts": {
+    "stream_stopped": "firing",
+    "stream_recovered": "inactive",
+    "invalid_stream": "firing",
+    "invalid_recovered": "inactive"
+  },
+  "additional_checks": {
+    "unit_tests": {
+      "passed": 18,
+      "discovery_skipped": 10
+    },
+    "postgresql_integration_tests": {
+      "passed": 8
+    },
+    "airflow_dag_test": {
+      "passed": 1
+    },
+    "browser_filters": [
+      {
+        "filter": "single DC",
+        "status": "passed"
+      },
+      {
+        "filter": "multiple states",
+        "status": "passed"
+      },
+      {
+        "filter": "multiple merchants",
+        "status": "passed"
+      },
+      {
+        "filter": "quoted empty selection",
+        "status": "passed"
+      },
+      {
+        "filter": "all values",
+        "status": "passed"
+      }
+    ],
+    "screenshots": [
+      "reports/screenshots/scoring.png",
+      "reports/screenshots/storage.png",
+      "reports/screenshots/system.png",
+      "reports/screenshots/business.png"
+    ],
+    "runtime": {
+      "docker_cpus": 4,
+      "docker_memory_bytes": 6160240640,
+      "training_iterations": 300
+    }
+  }
+}

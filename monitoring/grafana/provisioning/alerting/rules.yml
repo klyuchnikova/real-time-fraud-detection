@@ -1,0 +1,169 @@
+{
+  "apiVersion": 1,
+  "groups": [
+    {
+      "orgId": 1,
+      "name": "fraud-service",
+      "folder": "Fraud",
+      "interval": "10s",
+      "rules": [
+        {
+          "uid": "stream-stopped",
+          "title": "Поток скоринга остановился",
+          "condition": "C",
+          "for": "30s",
+          "noDataState": "NoData",
+          "execErrState": "Error",
+          "isPaused": false,
+          "labels": {
+            "service": "scoring",
+            "severity": "warning"
+          },
+          "annotations": {
+            "summary": "Нет успешных результатов >60 секунд; начальный прогрев 120 секунд."
+          },
+          "data": [
+            {
+              "refId": "A",
+              "datasourceUid": "prometheus",
+              "relativeTimeRange": {
+                "from": 120,
+                "to": 0
+              },
+              "model": {
+                "refId": "A",
+                "expr": "(time() - fraud_last_processed_timestamp_seconds > bool 60) * (time() - fraud_started_timestamp_seconds > bool 120)",
+                "instant": true,
+                "range": false,
+                "intervalMs": 1000,
+                "maxDataPoints": 43200,
+                "datasource": {
+                  "type": "prometheus",
+                  "uid": "prometheus"
+                }
+              }
+            },
+            {
+              "refId": "C",
+              "datasourceUid": "__expr__",
+              "relativeTimeRange": {
+                "from": 0,
+                "to": 0
+              },
+              "model": {
+                "refId": "C",
+                "type": "threshold",
+                "expression": "A",
+                "conditions": [
+                  {
+                    "type": "query",
+                    "evaluator": {
+                      "type": "gt",
+                      "params": [
+                        0
+                      ]
+                    },
+                    "operator": {
+                      "type": "and"
+                    },
+                    "reducer": {
+                      "type": "last",
+                      "params": []
+                    },
+                    "query": {
+                      "params": [
+                        "C"
+                      ]
+                    }
+                  }
+                ],
+                "datasource": {
+                  "type": "__expr__",
+                  "uid": "__expr__"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "uid": "invalid-stream",
+          "title": "Некорректный входной поток",
+          "condition": "C",
+          "for": "30s",
+          "noDataState": "NoData",
+          "execErrState": "Error",
+          "isPaused": false,
+          "labels": {
+            "service": "scoring",
+            "severity": "warning"
+          },
+          "annotations": {
+            "summary": "Доля некорректных сообщений >1%, минимум 20 сообщений за минуту."
+          },
+          "data": [
+            {
+              "refId": "A",
+              "datasourceUid": "prometheus",
+              "relativeTimeRange": {
+                "from": 120,
+                "to": 0
+              },
+              "model": {
+                "refId": "A",
+                "expr": "(increase(fraud_invalid_total[1m]) / clamp_min(increase(fraud_invalid_total[1m]) + increase(fraud_processed_total[1m]), 1) > bool 0.01) * (increase(fraud_invalid_total[1m]) + increase(fraud_processed_total[1m]) >= bool 20)",
+                "instant": true,
+                "range": false,
+                "intervalMs": 1000,
+                "maxDataPoints": 43200,
+                "datasource": {
+                  "type": "prometheus",
+                  "uid": "prometheus"
+                }
+              }
+            },
+            {
+              "refId": "C",
+              "datasourceUid": "__expr__",
+              "relativeTimeRange": {
+                "from": 0,
+                "to": 0
+              },
+              "model": {
+                "refId": "C",
+                "type": "threshold",
+                "expression": "A",
+                "conditions": [
+                  {
+                    "type": "query",
+                    "evaluator": {
+                      "type": "gt",
+                      "params": [
+                        0
+                      ]
+                    },
+                    "operator": {
+                      "type": "and"
+                    },
+                    "reducer": {
+                      "type": "last",
+                      "params": []
+                    },
+                    "query": {
+                      "params": [
+                        "C"
+                      ]
+                    }
+                  }
+                ],
+                "datasource": {
+                  "type": "__expr__",
+                  "uid": "__expr__"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

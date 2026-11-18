@@ -6,9 +6,8 @@ import os
 import time
 import uuid
 from pathlib import Path
-from confluent_kafka import Producer, Consumer
+from confluent_kafka import Producer, Consumer, TopicPartition
 import psycopg
-from common.registry import active_version
 
 def check(expected_version=None, timeout=120):
     with (Path(__file__).resolve().parents[1]/"examples/demo.csv").open(encoding="utf-8",newline="") as stream:
@@ -17,7 +16,16 @@ def check(expected_version=None, timeout=120):
     broker=os.getenv("KAFKA_BOOTSTRAP_SERVERS","kafka:19092")
     consumer=Consumer({"bootstrap.servers":broker,"group.id":"smoke-"+transaction_id,
                        "auto.offset.reset":"earliest","enable.auto.commit":False})
-    consumer.subscribe(["scores"])
+    # Start at current high watermarks BEFORE producing the probe.
+    # Replaying the complete historical topic cannot keep up with a live stream.
+    metadata = consumer.list_topics("scores", timeout=15)
+    partitions = metadata.topics["scores"].partitions
+    offsets = []
+    for partition in partitions:
+        topic_partition = TopicPartition("scores", partition)
+        _, high = consumer.get_watermark_offsets(topic_partition, timeout=15)
+        offsets.append(TopicPartition("scores", partition, high))
+    consumer.assign(offsets)
     producer=Producer({"bootstrap.servers":broker,"acks":"all"})
     errors=[]
     producer.produce("transactions",key=transaction_id.encode(),
@@ -28,6 +36,7 @@ def check(expected_version=None, timeout=120):
     kafka_result=None
     saved=None
     deadline=time.monotonic()+timeout
+    next_db_check=0
     try:
         while time.monotonic()<deadline:
             message=consumer.poll(0.5)
@@ -35,8 +44,10 @@ def check(expected_version=None, timeout=120):
                 result=json.loads(message.value())
                 if result["transaction_id"]==transaction_id:
                     kafka_result=result
-            with psycopg.connect(os.environ["DATABASE_URL"]) as connection:
-                saved=connection.execute("SELECT score,fraud_flag,model_version FROM transaction_scores WHERE transaction_id=%s",(transaction_id,)).fetchone()
+            if time.monotonic() >= next_db_check:
+                with psycopg.connect(os.environ["DATABASE_URL"]) as connection:
+                    saved=connection.execute("SELECT score,fraud_flag,model_version FROM transaction_scores WHERE transaction_id=%s",(transaction_id,)).fetchone()
+                next_db_check=time.monotonic()+0.5
             if saved and kafka_result:
                 if (saved[0],saved[1],saved[2]) != (kafka_result["score"],kafka_result["fraud_flag"],kafka_result["model_version"]):
                     raise AssertionError("Kafka result differs from PostgreSQL")

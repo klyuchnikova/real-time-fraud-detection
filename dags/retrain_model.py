@@ -2,7 +2,7 @@
 from datetime import timedelta
 import pendulum
 from airflow.decorators import dag, task
-from pipeline.retrain import (reserve_window, prepare_dataset, train_candidate,
+from pipeline.airflow_tasks import (reserve_window, prepare_dataset, train_candidate,
                               evaluate_candidate, save_candidate, publish_candidate, finish_month)
 
 @dag(dag_id="retrain_model", schedule="*/5 * * * *", start_date=pendulum.datetime(2026,1,1,tz="UTC"),

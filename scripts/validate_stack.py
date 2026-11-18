@@ -6,6 +6,7 @@ import os
 import time
 import uuid
 import urllib.request
+import urllib.error
 from datetime import datetime, timezone
 from pathlib import Path
 import psycopg
@@ -20,8 +21,17 @@ def api(path, method="GET", payload=None):
     request=urllib.request.Request(BASE+"/api/v1"+path,
         data=None if payload is None else json.dumps(payload).encode(),
         headers={"Authorization":"Basic "+token,"Content-Type":"application/json"},method=method)
-    with urllib.request.urlopen(request,timeout=30) as response:
-        return json.load(response)
+    for attempt in range(6):
+        try:
+            with urllib.request.urlopen(request,timeout=30) as response:
+                return json.load(response)
+        except urllib.error.HTTPError as error:
+            if method!="GET" or error.code not in (502,503,504) or attempt==5:
+                raise
+        except (urllib.error.URLError, TimeoutError, ConnectionError):
+            if method!="GET" or attempt==5:
+                raise
+        time.sleep(min(2 ** attempt, 8))
 
 def manual(dag_id, timeout):
     run_id="acceptance-"+uuid.uuid4().hex
@@ -38,13 +48,15 @@ def manual(dag_id, timeout):
                 raise AssertionError(f"Manual DAG did not succeed: {evidence}")
             print(f"Completed {dag_id}: success",flush=True)
             return evidence
-        time.sleep(2)
+        time.sleep(5)
     raise TimeoutError(f"Airflow did not finish {dag_id}: {run_id}")
 
 def main():
     parser=argparse.ArgumentParser()
-    parser.add_argument("--output",default="reports/hw3_validation.json")
+    parser.add_argument("--output",default="reports/retraining_validation.json")
     parser.add_argument("--timeout",type=int,default=900)
+    parser.add_argument("--monitoring-only",action="store_true",
+                        help="Verify publication without re-running unrelated supply and DQ acceptance")
     args=parser.parse_args()
     report={"checked_at":datetime.now(timezone.utc).isoformat(),"status":"running"}
     try:
@@ -61,7 +73,10 @@ def main():
             report["dags"][name]={"tasks":len(tasks)}
         before=check()
         report["score_before"]=before
-        report["manual_runs"]=[manual("data_quality",args.timeout),manual("supply_labeled_batch",args.timeout)]
+        report["manual_runs"]=[]
+        if not args.monitoring_only:
+            for dag_id in ("data_quality","supply_labeled_batch"):
+                report["manual_runs"].append(manual(dag_id,args.timeout))
         for _ in range(5):
             report["manual_runs"].append(manual("retrain_model",args.timeout))
             after=check()

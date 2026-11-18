@@ -11,13 +11,14 @@ class ModelNotReady(RuntimeError):
     pass
 
 class Scorer:
-    def __init__(self, models_path, threshold=0.98):
+    def __init__(self, models_path, threshold=0.98, metrics=None):
         if not 0 <= threshold <= 1:
             raise ValueError("FRAUD_THRESHOLD must be between 0 and 1")
         self.root = Path(models_path)
         self.threshold = threshold
         self.model = self.artifact = self.version = None
         self._failed_version = None
+        self.metrics = metrics
 
     def refresh(self):
         try:
@@ -27,10 +28,15 @@ class Scorer:
             if version != self.version:
                 # Swap references only after the entire replacement passes validation.
                 model, artifact, _ = load_bundle(self.root, version)
+                previous = self.version
                 self.model, self.artifact, self.version = model, artifact, version
+                if self.metrics is not None:
+                    self.metrics.activated(previous, version)
                 self._failed_version = None
                 logger.info("Activated model_version=%s", version)
         except Exception as error:
+            if self.metrics is not None:
+                self.metrics.reload_errors.inc()
             # Deserialization libraries can raise their own exception classes.
             key = str(error)
             if self._failed_version != key:

@@ -17,8 +17,10 @@ artifacts/*
 !artifacts/.gitkeep
 reports/*
 !reports/.gitkeep
-!reports/hw3_validation.json
+!reports/monitoring_validation.json
+!reports/screenshots/
+!reports/screenshots/*.png
 postgres_data/
 kafka_data/
-*/PLAN.md
-*/TASK.md
+**/PLAN.md
+**/TASK.md

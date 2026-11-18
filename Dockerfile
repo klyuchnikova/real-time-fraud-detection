@@ -8,6 +8,9 @@ COPY common /app/common
 COPY pipeline /app/pipeline
 COPY scoring_service /app/scoring_service
 COPY scores_sink /app/scores_sink
+COPY transaction_simulator /app/transaction_simulator
+COPY monitoring /app/monitoring
+COPY Makefile /app/Makefile
 COPY scripts /app/scripts
 COPY sql /app/sql
 COPY tests /app/tests
